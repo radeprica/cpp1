@@ -30,7 +30,7 @@ void Puzzle::initialize_from_file(const std::string& input_path)
         {
             throw PuzzleException("Wrong input format in first line");
         }
-        if (!(iss >> value)) 
+        if (!(iss >> value) || !iss.eof()) 
         {
             throw PuzzleException("Wrong input format in first line");
         }
