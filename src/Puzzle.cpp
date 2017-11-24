@@ -1,6 +1,7 @@
 #include "Puzzle.h"
 #include "Piece.h"
 #include "Exceptions.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <fstream>
@@ -60,6 +61,10 @@ void Puzzle::parse_piece_line(const std::string& line)
     unsigned int id;
     int left, top, right, bottom;
     std::istringstream iss(line);
+    if (iss.eof())
+    {
+        return;
+    }
     if (!(iss >> id))
     {
         // TODO: add line number to exception message
@@ -93,6 +98,56 @@ void Puzzle::parse_piece_line(const std::string& line)
                                         (PieceSideShape)right, 
                                         (PieceSideShape)bottom)));
 
+}
+
+bool Puzzle::had_initialization_errors()
+{
+    return (!_missing_ids.empty() ||
+            ! _wrong_format_pieces.empty() ||
+            !_wrong_id_pieces.empty());
+}
+
+void Puzzle::log_initialization_errors()
+{
+    if (!_missing_ids.empty())
+    {
+        LOG << "Missing puzzle element(s) with the following IDs: ";
+        std::list<unsigned int>::const_iterator i = _missing_ids.begin();
+        LOG << *i;
+        i++;
+        while(i != _missing_ids.end())
+        {
+            LOG << ", " << *i ;
+            i++;
+        }
+        LOG << std::endl;
+    }
+    
+    if (!_wrong_id_pieces.empty())
+    {
+		LOG << "Puzzle of size " << _num_of_pieces << " cannot have the following IDs: ";
+        std::list<int>::const_iterator i = _wrong_id_pieces.begin();
+		LOG << *i;
+        i++;
+        while(i != _wrong_id_pieces.end())
+        {
+            LOG << ", " << *i ;
+            i++;
+        }
+		LOG << std::endl;
+    }
+
+    if (!_wrong_format_pieces.empty())
+    {
+		for (std::list<std::pair<int, std::string>>::const_iterator i = _wrong_format_pieces.begin(); 
+            i != _wrong_format_pieces.end(); 
+            ++i)
+    	{
+			LOG << "Puzzle ID " << i->first << " has wrong data: ";
+			LOG << i->second;
+			LOG << std::endl;
+		}
+    }
 }
 
 void Puzzle::print_pieces()

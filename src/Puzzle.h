@@ -10,10 +10,8 @@ public:
     ~Puzzle() { }
 
     void initialize_from_file(const std::string& input_path);
-    const std::list<unsigned int> get_missing_pieces() { return _missing_ids; }
-    const std::list<int> get_wrong_id_pieces() { return _wrong_id_pieces; }
-    const std::list<std::pair<int, std::string>> get_wrong_format_pieces() { return _wrong_format_pieces; }
-    int get_size() { return _num_of_pieces; }
+    bool had_initialization_errors();
+    void log_initialization_errors();
 
     //TODO: remove this
     void print_pieces();
@@ -27,4 +25,8 @@ private:
     std::list<unsigned int> _missing_ids;
     std::list<int> _wrong_id_pieces;
     std::list<std::pair<int, std::string>> _wrong_format_pieces;
+
+private:
+    Puzzle(const Puzzle&) = delete;
+    Puzzle& operator=(const Puzzle&) = delete;
 };
