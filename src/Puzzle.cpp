@@ -11,6 +11,7 @@
 
 void Puzzle::initialize_from_file(const std::string& input_path)
 {
+    static const std::string num_elements_str("NumElements");
     std::ifstream input_file(input_path);
     if (input_file.fail())
     {
@@ -22,9 +23,15 @@ void Puzzle::initialize_from_file(const std::string& input_path)
         std::getline(input_file, line);
         std::istringstream iss(line);
         unsigned int value;
-        unsigned int id, left, top, right, bottom;
+        unsigned int id;
+        int left, top, right, bottom;
         char delim = '=';
-        if (!(iss >> key >> delim >> value) || key.compare("NumElements")) 
+        std::getline(iss, key, delim);
+        if (key.compare(0, num_elements_str.length(), num_elements_str) != 0)
+        {
+            throw PuzzleException("Wrong input format in first line");
+        }
+        if (!(iss >> value)) 
         {
             throw PuzzleException("Wrong input format in first line");
         }
@@ -62,10 +69,29 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     }
 }
 
+std::vector<unsigned int> Puzzle::get_missing_pieces()
+{
+    std::vector<unsigned int> missing_pieces;
+
+    for (unsigned int i = 0; i < _num_of_pieces; i++)
+    {
+        if (_puzzle_pieces[i].get() == NULL)
+        {
+            missing_pieces.push_back(i + 1);
+        }
+    }
+
+    return missing_pieces;
+}
+
 void Puzzle::print_pieces()
 {
     for (const PiecePtr p : _puzzle_pieces)
 	{	
+        if(p.get() == NULL)
+        {
+            continue;
+        }
 		std::cout << "id: " << p->get_id() << 
         " left: " << p->get_left_side_shape() << 
         " top: " << p->get_top_side_shape() << 

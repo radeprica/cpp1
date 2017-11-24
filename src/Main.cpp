@@ -25,6 +25,13 @@ int main(int argc, char* argv[])
 		Puzzle puzzle;
 		puzzle.initialize_from_file(argv[1]);
 		puzzle.print_pieces();
+		std::vector <unsigned int> missing_pieces = puzzle.get_missing_pieces();
+		std::cout << "missing pieces: " << std::endl;
+		for (std::vector<unsigned int>::const_iterator i = missing_pieces.begin(); i != missing_pieces.end(); ++i)
+    	{
+			std::cout << *i << ' ';
+		}
+		std::cout << std::endl;
 	}
 	catch (PuzzleException& e)
 	{
