@@ -13,47 +13,46 @@
 void Puzzle::initialize_from_file(const std::string& input_path)
 {
     static const std::string num_elements_str("NumElements");
+    static const char delim = '=';
+
     std::ifstream input_file(input_path);
     if (input_file.fail())
     {
         throw PuzzleException(strerror(errno));
     }
-    try
-    {
-        std::string line, key;
-        std::getline(input_file, line);
-        std::istringstream iss(line);
-        unsigned int value;
-        char delim = '=';
-        std::getline(iss, key, delim);
-        if (key.compare(0, num_elements_str.length(), num_elements_str) != 0)
-        {
-            throw PuzzleException("Wrong input format in first line");
-        }
-        if (!(iss >> value) || !iss.eof()) 
-        {
-            throw PuzzleException("Wrong input format in first line");
-        }
+
+    std::string line, key;
+    unsigned int value;
     
-        _num_of_pieces = value;
-        _puzzle_pieces = std::vector<PiecePtr>(_num_of_pieces);
-        for (unsigned int i = 1; i <= _num_of_pieces; i++)
-        {
-            _missing_ids.push_back(i);
-        }
-
-        while (std::getline(input_file, line))
-        {
-            parse_piece_line(line);
-        }
-
-        input_file.close();
-    }
-    catch (PuzzleException& e)
+    // Parse first line
+    std::getline(input_file, line);
+    std::istringstream iss(line); 
+    std::getline(iss, key, delim);
+    if (key.compare(0, num_elements_str.length(), num_elements_str) != 0)
     {
-        std::cerr << "puzzle exception caught: " << e.get_cause() << '\n';
-        input_file.close();
+        throw PuzzleException("Wrong input format in first line");
     }
+    if (!(iss >> value) || !iss.eof()) 
+    {
+        throw PuzzleException("Wrong input format in first line");
+    }
+
+    _num_of_pieces = value;
+    _puzzle_pieces = std::vector<PiecePtr>(_num_of_pieces);
+
+    // Starting with all pieces missing
+    for (unsigned int i = 1; i <= _num_of_pieces; i++)
+    {
+        _missing_ids.push_back(i);
+    }
+
+    // Parse next lines
+    while (std::getline(input_file, line))
+    {
+        parse_piece_line(line);
+    }
+
+    input_file.close();
 }
 
 void Puzzle::parse_piece_line(const std::string& line)
@@ -68,7 +67,7 @@ void Puzzle::parse_piece_line(const std::string& line)
     if (!(iss >> id))
     {
         // TODO: add line number to exception message
-        throw PuzzleException("Wrong input format in line");
+        throw PuzzleException("Wrong input format in line: %s", line.c_str());
     }
     if (id < 1 || id > _num_of_pieces)
     {
