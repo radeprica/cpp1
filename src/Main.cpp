@@ -38,7 +38,14 @@ int main(int argc, char* argv[])
 	}
 	catch (PuzzleException& e)
 	{
-		LOG << "puzzle exception caught: " << e.get_cause() << '\n';
+		if(Logger::is_set())
+		{
+			LOG << "puzzle exception caught: " << e.get_cause() << '\n';
+		}
+		else
+		{
+			std::cout << "puzzle exception caught: " << e.get_cause() << '\n';
+		}
 	}
 	catch(...)
 	{
