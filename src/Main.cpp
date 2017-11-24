@@ -1,37 +1,38 @@
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <list>
 #include "Piece.h"
-#include "Solver.h"
+#include "Puzzle.h"
+#include "Exceptions.h"
+
+enum arguments
+{
+	no_arguments = 0,
+	input_file,
+	max_arguments,
+};
 
 int main(int argc, char* argv[])
 {
-	std::ifstream infile(argv[1]);
-	std::string line;
-
-	int num_of_pieces;
-
-	std::getline(infile, line);
-	std::istringstream iss(line);
-	std::string key;
-	int value;
-	char delim = '=';
-	if (!(iss >> key >> delim >> value)) {}
-	num_of_pieces = value;
-
-	std::list<Piece> pieces_lst;
-
-	while (std::getline(infile, line))
+	try
 	{
-		std::istringstream iss(line);
-		int id, left, top, right, bottom;
-		if (!(iss >> id >> left >> top >> right >> bottom)) {}
-
-		Piece p = Piece(id, left, top, right, bottom);
-		pieces_lst.push_back(p);
+		if (argc != arguments::max_arguments)
+		{
+			printf("Wrong usage\n");
+			return -1;
+		}
+		Puzzle puzzle;
+		puzzle.initialize_from_file(argv[1]);
+		puzzle.print_pieces();
 	}
-	
-	Solver::sanity(pieces_lst, num_of_pieces);
-
+	catch (PuzzleException& e)
+	{
+		std::cerr << "puzzle exception caught: " << e.get_cause() << '\n';
+	}
+	catch(...)
+	{
+		printf("Something went terribly wrong!\n");
+	}
 	return 0;
 }
