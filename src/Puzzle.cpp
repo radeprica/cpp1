@@ -23,8 +23,6 @@ void Puzzle::initialize_from_file(const std::string& input_path)
         std::getline(input_file, line);
         std::istringstream iss(line);
         unsigned int value;
-        unsigned int id;
-        int left, top, right, bottom;
         char delim = '=';
         std::getline(iss, key, delim);
         if (key.compare(0, num_elements_str.length(), num_elements_str) != 0)
@@ -38,28 +36,16 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     
         _num_of_pieces = value;
         _puzzle_pieces = std::vector<PiecePtr>(_num_of_pieces);
+        for (unsigned int i = 1; i <= _num_of_pieces; i++)
+        {
+            _missing_ids.push_back(i);
+        }
 
         while (std::getline(input_file, line))
         {
-            std::istringstream iss(line);
-            if (!(iss >> id >> left >> top >> right >> bottom))
-            {
-                // TODO: add line number to exception message
-                throw PuzzleException("Wrong input format in line");
-            }
-
-            if(id < 1 || id > _num_of_pieces)
-            {
-                // TODO: handle this the way it says in the worksheet
-                throw PuzzleException("invalid id");
-            }
-            
-            _puzzle_pieces[id-1] = PiecePtr(new Piece(id,
-                                                (PieceSideShape)left, 
-                                                (PieceSideShape)top, 
-                                                (PieceSideShape)right, 
-                                                (PieceSideShape)bottom));
+            parse_piece_line(line);
         }
+
         input_file.close();
     }
     catch (PuzzleException& e)
@@ -69,19 +55,44 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     }
 }
 
-std::vector<unsigned int> Puzzle::get_missing_pieces()
+void Puzzle::parse_piece_line(const std::string& line)
 {
-    std::vector<unsigned int> missing_pieces;
-
-    for (unsigned int i = 0; i < _num_of_pieces; i++)
+    unsigned int id;
+    int left, top, right, bottom;
+    std::istringstream iss(line);
+    if (!(iss >> id))
     {
-        if (_puzzle_pieces[i].get() == NULL)
-        {
-            missing_pieces.push_back(i + 1);
-        }
+        // TODO: add line number to exception message
+        throw PuzzleException("Wrong input format in line");
+    }
+    if (id < 1 || id > _num_of_pieces)
+    {
+        _wrong_id_pieces.push_back(id);
+        return;
     }
 
-    return missing_pieces;
+    _missing_ids.remove(id);
+
+    if (!(iss >> left >> top >> right >> bottom) || !iss.eof())
+    {
+        std::pair<int, std::string> bad_line_pair(id, line);
+        _wrong_format_pieces.push_back(bad_line_pair);
+        return;
+    }
+    if(left < -1 || left > 1 || 
+        top < -1 || top > 1 || 
+        right < -1 || right > 1 || 
+        bottom < -1 || bottom > 1)
+        {
+            std::pair<int, std::string> bad_line_pair(id, line);
+           _wrong_format_pieces.push_back(bad_line_pair); 
+        }
+    _puzzle_pieces.push_back(PiecePtr(new Piece(id,
+                                        (PieceSideShape)left, 
+                                        (PieceSideShape)top, 
+                                        (PieceSideShape)right, 
+                                        (PieceSideShape)bottom)));
+
 }
 
 void Puzzle::print_pieces()
