@@ -1,6 +1,7 @@
 #include <vector>
 #include <list>
 #include <string>
+#include <set>
 #include "Piece.h"
 
 class Puzzle
@@ -10,16 +11,15 @@ public:
     ~Puzzle() { }
 
     void initialize_from_file(const std::string& input_path);
-    const std::list<unsigned int> get_missing_pieces() { return _missing_ids; }
-    const std::list<int> get_wrong_id_pieces() { return _wrong_id_pieces; }
-    const std::list<std::pair<int, std::string>> get_wrong_format_pieces() { return _wrong_format_pieces; }
-    int get_size() { return _num_of_pieces; }
+    bool had_initialization_errors();
+    void log_initialization_errors();
 
     //TODO: remove this
     void print_pieces();
 
 private:
     void parse_piece_line(const std::string& line);
+	void find_corners_candidates();
 
 private:
     unsigned int _num_of_pieces;
@@ -27,4 +27,15 @@ private:
     std::list<unsigned int> _missing_ids;
     std::list<int> _wrong_id_pieces;
     std::list<std::pair<int, std::string>> _wrong_format_pieces;
+
+<<<<<<< HEAD
+	std::set<unsigned int> _tl_corner_candids;
+	std::set<unsigned int> _tr_corner_candids;
+	std::set<unsigned int> _bl_corner_candids;
+	std::set<unsigned int> _br_corner_candids;
+=======
+private:
+    Puzzle(const Puzzle&) = delete;
+    Puzzle& operator=(const Puzzle&) = delete;
+>>>>>>> ee408bd63ec7792d66fbce159f4a28e47bb0438e
 };
