@@ -20,6 +20,7 @@ public:
 private:
     void parse_piece_line(const std::string& line);
 	void find_corners_candidates();
+    void find_possible_dimentions();
 
 private:
     unsigned int _num_of_pieces;
@@ -27,6 +28,8 @@ private:
     std::list<unsigned int> _missing_ids;
     std::list<int> _wrong_id_pieces;
     std::list<std::pair<int, std::string>> _wrong_format_pieces;
+
+    std::list<std::pair<unsigned int, unsigned int>> _possible_dimentions;
 
 	std::set<unsigned int> _tl_corner_candids;
 	std::set<unsigned int> _tr_corner_candids;

@@ -8,6 +8,7 @@
 #include <sstream>
 #include <cerrno>
 #include <cstring>
+#include <cmath>
 
 
 void Puzzle::initialize_from_file(const std::string& input_path)
@@ -149,20 +150,18 @@ void Puzzle::log_initialization_errors()
     }
 }
 
-void Puzzle::print_pieces()
+void Puzzle::find_possible_dimentions()
 {
-    for (const PiecePtr p : _puzzle_pieces)
-	{	
-        if(p.get() == NULL)
+    unsigned int i = 0;
+
+    for (i = 1; i <= static_cast<unsigned int>(sqrt(_num_of_pieces)); i++)
+    {
+        if(_num_of_pieces % i == 0)
         {
-            continue;
+            std::pair<unsigned int, unsigned int> dimenstions(i, _num_of_pieces / i);
+            _possible_dimentions.push_back(dimenstions);
         }
-		std::cout << "id: " << p->get_id() << 
-        " left: " << p->get_left_side_shape() << 
-        " top: " << p->get_top_side_shape() << 
-        " right: " << p->get_right_side_shape() << 
-        " bottom: " << p-> get_bottom_side_shape() << std::endl;
-	}
+    }
 }
 
 void Puzzle::find_corners_candidates()
@@ -192,6 +191,27 @@ void Puzzle::find_corners_candidates()
 				_br_corner_candids.insert(p->get_id());
 			}
 		}
-		
 	}
+}
+
+//TODO: remove this
+void Puzzle::print_pieces()
+{
+    for (const PiecePtr p : _puzzle_pieces)
+	{	
+        if(p.get() == NULL)
+        {
+            continue;
+        }
+		std::cout << "id: " << p->get_id() << 
+        " left: " << p->get_left_side_shape() << 
+        " top: " << p->get_top_side_shape() << 
+        " right: " << p->get_right_side_shape() << 
+        " bottom: " << p-> get_bottom_side_shape() << std::endl;
+	}
+
+    for (std::pair<unsigned int, unsigned int> dim : _possible_dimentions)
+    {
+        std::cout << dim.first << ", " << dim.second << std::endl;
+    }
 }
