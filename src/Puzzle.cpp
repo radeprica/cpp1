@@ -53,6 +53,8 @@ void Puzzle::initialize_from_file(const std::string& input_path)
         parse_piece_line(line);
     }
 
+    find_possible_dimentions();
+    
     input_file.close();
 }
 
@@ -67,7 +69,6 @@ void Puzzle::parse_piece_line(const std::string& line)
     }
     if (!(iss >> id))
     {
-        // TODO: add line number to exception message
         throw PuzzleException("Wrong input format in line: %s", line.c_str());
     }
     if (id < 1 || id > _num_of_pieces)

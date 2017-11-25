@@ -47,6 +47,17 @@ int main(int argc, char* argv[])
 			std::cout << "puzzle exception caught: " << e.get_cause() << '\n';
 		}
 	}
+	catch (const std::exception& e)
+	{
+		if(Logger::is_set())
+		{
+			LOG << "std exception caught: " << e.what() << '\n';
+		}
+		else
+		{
+			LOG << "std exception caught: " << e.what() << '\n';
+		}
+	}
 	catch(...)
 	{
 		printf("Something went terribly wrong!\n");
