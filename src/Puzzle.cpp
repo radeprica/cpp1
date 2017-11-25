@@ -40,15 +40,10 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     _num_of_pieces = value;
     _puzzle_pieces = std::vector<PiecePtr>(_num_of_pieces);
 
-<<<<<<< HEAD
-        input_file.close();
-
-=======
     // Starting with all pieces missing
     for (unsigned int i = 1; i <= _num_of_pieces; i++)
     {
         _missing_ids.push_back(i);
->>>>>>> ee408bd63ec7792d66fbce159f4a28e47bb0438e
     }
 
     // Parse next lines

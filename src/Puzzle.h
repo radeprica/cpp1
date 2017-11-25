@@ -28,14 +28,13 @@ private:
     std::list<int> _wrong_id_pieces;
     std::list<std::pair<int, std::string>> _wrong_format_pieces;
 
-<<<<<<< HEAD
 	std::set<unsigned int> _tl_corner_candids;
 	std::set<unsigned int> _tr_corner_candids;
 	std::set<unsigned int> _bl_corner_candids;
 	std::set<unsigned int> _br_corner_candids;
-=======
+
 private:
     Puzzle(const Puzzle&) = delete;
     Puzzle& operator=(const Puzzle&) = delete;
->>>>>>> ee408bd63ec7792d66fbce159f4a28e47bb0438e
+
 };
