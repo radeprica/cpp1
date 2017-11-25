@@ -21,6 +21,11 @@ public:
     PieceSideShape get_top_side_shape() { return _top; }
     PieceSideShape get_right_side_shape() { return _right; }
     PieceSideShape get_bottom_side_shape() { return _bottom; }
+	bool is_tl_corner();
+	bool is_tr_corner();
+	bool is_bl_corner();
+	bool is_br_corner();
+	static bool is_possible_edges_match(PieceSideShape p1, PieceSideShape p2);
 
 private:
 	const unsigned int _id;

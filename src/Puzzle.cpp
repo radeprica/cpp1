@@ -56,8 +56,123 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     find_possible_dimentions();
 
     input_file.close();
+	find_all_possible_right_and_top_matches();
+	permutation = std::vector<int>(6);
+	for (int i = 0; i < 6; i++)
+	{ permutation[i]=i;}
+	Puzzle::bla(0,3,2);
 }
 
+void Puzzle::bla(int k, int row_size, int column_size)
+{
+	//std::cout<<" curent k: " << k << std::endl;
+
+	if (k == 6)
+	{ 	
+		int last_piece_index = permutation[k-1];
+		if (!_puzzle_pieces[last_piece_index]->is_br_corner())
+			return;
+		
+		/* already has some piece on top of him */
+		if ((row_size-1) > 0)
+		{
+			int top_of_candidate = permutation[k-1-row_size];
+			if (!_possible_top_matches[last_piece_index][top_of_candidate])
+			{
+				return;
+			}
+		}
+		/* puzzle that is one row */
+		else
+		{
+			if (!_puzzle_pieces[last_piece_index]->is_tr_corner())
+				return;
+		}
+
+		/* already has some piece on left of him */
+		if ((column_size) > 0)
+		{
+			int left_of_candidate = permutation[k-1-1];
+			if (!_possible_right_matches[left_of_candidate][last_piece_index])
+			{
+				return;
+			}
+		}
+		/* puzzle that is one column */
+		else
+		{
+			if (!_puzzle_pieces[last_piece_index]->is_bl_corner())
+				return;
+		}
+
+		std::cout<<"binga!"<<std::endl;
+		return; 
+	
+	}
+
+	int k_row =  (int)k/row_size;
+	int k_column = k%row_size;
+	
+
+	for (int i = k; i < 6; i++)
+	{
+		int candidate_p = permutation[i];
+
+		/* left misgeret */
+		if (k_column == 0)
+		{
+			if (_puzzle_pieces[candidate_p]->get_left_side_shape() != straight)
+				continue;
+		}
+		/* right misgeret */
+		if (k_column == (row_size-1))
+		{
+			if (_puzzle_pieces[candidate_p]->get_right_side_shape() != straight)
+				continue;
+		}
+		/* top misgeret */
+		if (k_row == 0)
+		{
+			if (_puzzle_pieces[candidate_p]->get_top_side_shape() != straight)
+				continue;
+		}
+		/* bottom misgeret */
+		if (k_row == (column_size - 1))
+		{
+			if (_puzzle_pieces[candidate_p]->get_bottom_side_shape() != straight)
+				continue;
+		}
+		/* already has some piece on top of him */
+		if (k_row > 0)
+		{
+			int top_of_candidate = permutation[k-row_size];
+			if (!_possible_top_matches[candidate_p][top_of_candidate])
+			{
+				continue;
+			}
+		}
+		/* already has some piece on left of him */
+		if (k_column > 0)
+		{
+			int left_of_candidate = permutation[k-1];
+			if (!_possible_right_matches[left_of_candidate][candidate_p])
+			{
+				continue;
+			}
+		}
+
+		int temp = permutation[k];
+		permutation[k] = candidate_p;
+		permutation[i] = temp;
+
+		Puzzle::bla(k+1, row_size, column_size);
+	
+		temp = permutation[i];
+		permutation[i] = permutation[k];
+		permutation[k] = temp;
+
+	}
+}
 void Puzzle::parse_piece_line(const std::string& line)
 {
     unsigned int id;
@@ -272,28 +387,33 @@ void Puzzle::find_corners_candidates()
 {
 	for (const PiecePtr p : _puzzle_pieces)
 	{
-		if (p->get_top_side_shape() == straight)
-		{
-			if (p->get_left_side_shape() == straight)
-			{
-				_tl_corner_candids.insert(p->get_id());
-			}
-			if (p->get_right_side_shape() == straight)
-			{
-				_tr_corner_candids.insert(p->get_id());
-			}
-		}
+		if (p->is_tl_corner())
+			_tl_corner_candids.insert(p->get_id());
+		if (p->is_tr_corner())
+			_tr_corner_candids.insert(p->get_id());
+		if (p->is_bl_corner())
+			_bl_corner_candids.insert(p->get_id());
+		if (p->is_br_corner())
+			_br_corner_candids.insert(p->get_id());
+	}
+}
 
-		if (p->get_bottom_side_shape() == straight)
+void Puzzle::find_all_possible_right_and_top_matches()
+{
+	_possible_right_matches = std::vector<std::vector<bool>>(_num_of_pieces, std::vector<bool>(_num_of_pieces));
+	_possible_top_matches = std::vector<std::vector<bool>>(_num_of_pieces, std::vector<bool>(_num_of_pieces));
+
+	for (const PiecePtr p1 : _puzzle_pieces)
+	{
+		unsigned int p1_index = p1->get_id() - 1;
+		PieceSideShape right = p1->get_right_side_shape();
+		PieceSideShape top = p1->get_top_side_shape();
+
+		for (const PiecePtr p2 : _puzzle_pieces)
 		{
-			if (p->get_left_side_shape() == straight)
-			{
-				_bl_corner_candids.insert(p->get_id());
-			}
-			if (p->get_right_side_shape() == straight)
-			{
-				_br_corner_candids.insert(p->get_id());
-			}
+			unsigned int p2_index = p2->get_id() - 1;
+			_possible_right_matches[p1_index][p2_index] = Piece::is_possible_edges_match(right, p2->get_left_side_shape());
+			_possible_top_matches[p1_index][p2_index] = Piece::is_possible_edges_match(top, p2->get_bottom_side_shape());
 		}
 	}
 }
