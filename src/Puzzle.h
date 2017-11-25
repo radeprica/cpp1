@@ -14,6 +14,7 @@ public:
     bool had_initialization_errors();
     void log_initialization_errors();
 
+    bool is_wrong_number_of_straight_edges();
     //TODO: remove this
     void print_pieces();
 

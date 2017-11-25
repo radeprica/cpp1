@@ -54,7 +54,7 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     }
 
     find_possible_dimentions();
-    
+
     input_file.close();
 }
 
@@ -163,6 +163,46 @@ void Puzzle::find_possible_dimentions()
             _possible_dimentions.push_back(dimenstions);
         }
     }
+}
+
+bool Puzzle::is_wrong_number_of_straight_edges()
+{
+    unsigned int num_left_straight = 0, num_top_straight = 0, num_right_straight = 0 , num_bottom_straight = 0;
+
+    for (const PiecePtr p : _puzzle_pieces)
+    {
+        if (p->get_top_side_shape() == straight)
+		{
+            num_top_straight++;
+        }
+        if (p->get_left_side_shape() == straight)
+        {
+            num_left_straight++;
+        }
+        if (p->get_right_side_shape() == straight)
+        {
+            num_right_straight++;
+        }
+		if (p->get_bottom_side_shape() == straight)
+		{
+            num_bottom_straight++;
+        }
+    }
+
+    for (const std::pair<unsigned int, unsigned int> dim : _possible_dimentions)
+    {
+        if (num_left_straight >= dim.first && num_right_straight >= dim.first &&
+            num_top_straight >= dim.second && num_bottom_straight >= dim.second)
+            {
+                return false;
+            }
+        if (num_left_straight >= dim.second && num_right_straight >= dim.second &&
+            num_top_straight >= dim.first && num_bottom_straight >= dim.first)
+            {
+                return false;
+            }
+    }
+    return true;
 }
 
 void Puzzle::find_corners_candidates()
