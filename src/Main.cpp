@@ -35,10 +35,9 @@ int main(int argc, char* argv[])
 			puzzle.log_initialization_errors();
 			return -1;
 		}
-		bool b = puzzle.is_wrong_number_of_straight_edges();
-		if (b)
+		if (puzzle.find_and_log_structure_errors())
 		{
-			LOG << "Cannot solve puzzle: wrong number of straight edges" << std::endl ;
+			return -1;
 		}
 	}
 	catch (PuzzleException& e)

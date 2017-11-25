@@ -151,6 +151,54 @@ void Puzzle::log_initialization_errors()
     }
 }
 
+bool Puzzle::find_and_log_structure_errors()
+{
+    static const std::string num_edges_err_str("Cannot solve puzzle: wrong number of straight edges");
+    static const std::string missing_corner_err_str("Cannot solve puzzle: missing corner element: ");
+    static const std::string sum_edges_err_str("Cannot solve puzzle: sum of edges is not zero");
+
+    bool ret = false;
+
+    if (is_wrong_number_of_straight_edges())
+    {
+        LOG << num_edges_err_str << std::endl;
+        ret = true;
+    }
+
+    find_corners_candidates();
+    if (_tl_corner_candids.empty())
+    {
+        LOG << missing_corner_err_str << "TL" << std::endl;
+        ret = true;
+    }
+
+    if (_tr_corner_candids.empty())
+    {
+        LOG << missing_corner_err_str << "TR" << std::endl;
+        ret = true;
+    }
+
+    if (_bl_corner_candids.empty())
+    {
+        LOG << missing_corner_err_str << "BL" << std::endl;
+        ret = true;
+    }
+
+    if (_br_corner_candids.empty())
+    {
+        LOG << missing_corner_err_str << "BR" << std::endl;
+        ret = true;
+    }
+
+    if (is_sum_of_edges_not_zero())
+    {
+        LOG << sum_edges_err_str << std::endl;
+        ret = true;
+    }
+
+    return ret;
+}
+
 void Puzzle::find_possible_dimentions()
 {
     unsigned int i = 0;
@@ -203,6 +251,21 @@ bool Puzzle::is_wrong_number_of_straight_edges()
             }
     }
     return true;
+}
+
+bool Puzzle::is_sum_of_edges_not_zero()
+{
+    int sum = 0;
+
+    for (const PiecePtr p : _puzzle_pieces)
+    {
+        sum += static_cast<int>(p->get_left_side_shape());
+        sum += static_cast<int>(p->get_top_side_shape());
+        sum += static_cast<int>(p->get_right_side_shape());
+        sum += static_cast<int>(p->get_bottom_side_shape());
+    }
+
+    return (sum != 0);
 }
 
 void Puzzle::find_corners_candidates()

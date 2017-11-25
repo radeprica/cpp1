@@ -13,8 +13,8 @@ public:
     void initialize_from_file(const std::string& input_path);
     bool had_initialization_errors();
     void log_initialization_errors();
+    bool find_and_log_structure_errors();
 
-    bool is_wrong_number_of_straight_edges();
     //TODO: remove this
     void print_pieces();
 
@@ -22,6 +22,8 @@ private:
     void parse_piece_line(const std::string& line);
 	void find_corners_candidates();
     void find_possible_dimentions();
+    bool is_wrong_number_of_straight_edges();
+    bool is_sum_of_edges_not_zero();
 
 private:
     unsigned int _num_of_pieces;
