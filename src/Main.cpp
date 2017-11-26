@@ -32,10 +32,9 @@ int main(int argc, char* argv[])
 
 		if(puzzle.had_initialization_errors())
 		{
-			puzzle.log_initialization_errors();
 			return -1;
 		}
-		if (puzzle.find_and_log_structure_errors())
+		if (!puzzle.solve())
 		{
 			return -1;
 		}

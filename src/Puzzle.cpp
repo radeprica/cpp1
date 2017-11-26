@@ -55,10 +55,30 @@ void Puzzle::initialize_from_file(const std::string& input_path)
 	
 	input_file.close();
 
-	/* solver initial data */
-
+    if(had_initialization_errors())
+    {
+        log_initialization_errors();
+        return;
+    }
 	// compute all possible dimentions for the given num of pieces
     find_possible_dimentions();
+    
+    _is_initialized = true;
+}
+
+bool Puzzle::solve()
+{
+    if(!_is_initialized)
+    {
+        return false;
+    }
+    if (find_and_log_structure_errors())
+    {
+        return false;
+    }
+
+	/* solver initial data */
+
 	// compute 2 boolean matrices of legal right matches & legal top matches
 	find_all_possible_right_and_top_matches();
 
@@ -70,17 +90,18 @@ void Puzzle::initialize_from_file(const std::string& input_path)
 		{ _permutation[i]=i;}
         if (Puzzle::try_solve(0, dim.first, dim.second))
         {
-            return;
+            return true;
         }
 
 		for (unsigned int i = 0; i < _num_of_pieces; i++)
 		{ _permutation[i]=i;}
         if (Puzzle::try_solve(0, dim.second, dim.first))
         {
-            return;
+            return true;
         }
     }
-	
+
+    return false;
 }
 
 bool Puzzle::try_solve(unsigned int k,unsigned int row_size, unsigned int column_size)
@@ -145,11 +166,11 @@ bool Puzzle::try_solve(unsigned int k,unsigned int row_size, unsigned int column
             {
                 if (i % row_size == 0)
                 {
-                    std::cout << std::endl;
+                    LOG << std::endl;
                 }
-                std::cout << _permutation[i]+1 << ' ';
+                LOG << _permutation[i]+1 << ' ';
             }
-            std::cout << std::endl;
+            LOG << std::endl;
             return true;
         }
 		

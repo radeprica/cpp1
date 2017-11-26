@@ -12,10 +12,11 @@ public:
 
     void initialize_from_file(const std::string& input_path);
     bool had_initialization_errors();
-    void log_initialization_errors();
-    bool find_and_log_structure_errors();
+    bool solve();
 	
 private:
+    void log_initialization_errors();
+    bool find_and_log_structure_errors();
 	bool try_solve(unsigned int k, unsigned int row_size, unsigned int column_size);
     void parse_piece_line(const std::string& line);
 	void find_corners_candidates();
@@ -25,6 +26,8 @@ private:
 	void find_all_possible_right_and_top_matches();
 	
 private:
+    bool _is_initialized = false;
+
     unsigned int _num_of_pieces;
     std::vector<PiecePtr> _puzzle_pieces;
     std::list<unsigned int> _missing_ids;
