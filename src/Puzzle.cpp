@@ -62,12 +62,14 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     }
 	// compute all possible dimentions for the given num of pieces
     find_possible_dimentions();
-    
+
     _is_initialized = true;
 }
 
 bool Puzzle::solve()
 {
+    static const std::string no_solution_str("Cannot solve puzzle: it seems that there is no proper solution");
+    
     if(!_is_initialized)
     {
         return false;
@@ -100,7 +102,7 @@ bool Puzzle::solve()
             return true;
         }
     }
-
+    LOG << no_solution_str << std::endl;
     return false;
 }
 
