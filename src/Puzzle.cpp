@@ -58,7 +58,7 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     input_file.close();
 	find_all_possible_right_and_top_matches();
 	_permutation = std::vector<unsigned int>(_num_of_pieces);
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < _num_of_pieces; i++)
 	{ _permutation[i]=i;}
     for (std::pair<unsigned int, unsigned int> dim : _possible_dimentions)
     {
@@ -146,7 +146,7 @@ bool Puzzle::try_solve(unsigned int k,unsigned int row_size, unsigned int column
             std::cout << std::endl;
             return true;
         }
-
+		/*
         else if (k > _num_of_pieces / 2)
         {
             for (unsigned int i = 0; i < k; i++)
@@ -159,6 +159,7 @@ bool Puzzle::try_solve(unsigned int k,unsigned int row_size, unsigned int column
             }
             std::cout << std::endl;
         }
+		*/
 		if (Puzzle::try_solve(k+1, row_size, column_size))
         {
             return true;
@@ -320,7 +321,7 @@ void Puzzle::find_possible_dimentions()
         if(_num_of_pieces % i == 0)
         {
             std::pair<unsigned int, unsigned int> dimenstions(i, _num_of_pieces / i);
-            _possible_dimentions.push_back(dimenstions);
+			_possible_dimentions.push_front(dimenstions);
         }
     }
 }

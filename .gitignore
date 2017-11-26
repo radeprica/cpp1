@@ -1,0 +1,17 @@
+
+*.sdf
+*.suo
+*.filters
+*.tlog
+*.ilk
+*.obj
+*.pdb
+*.lastbuildstate
+*.vcxproj
+*.user
+*.opensdf
+*.sln
+*.log
+src/Debug/vc110.idb
+src/Debug/cpp_ex1.exe
+tests/tempout.txt
