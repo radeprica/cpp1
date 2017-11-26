@@ -17,9 +17,9 @@ public:
 
     //TODO: remove this
     void print_pieces();
-	std::vector<int> permutation;
+	
 private:
-	void bla(int k, int row_size, int column_size);
+	bool try_solve(unsigned int k, unsigned int row_size, unsigned int column_size);
     void parse_piece_line(const std::string& line);
 	void find_corners_candidates();
     void find_possible_dimentions();
@@ -33,6 +33,7 @@ private:
     std::list<unsigned int> _missing_ids;
     std::list<int> _wrong_id_pieces;
     std::list<std::pair<int, std::string>> _wrong_format_pieces;
+    std::vector<unsigned int> _permutation;
 
     std::list<std::pair<unsigned int, unsigned int>> _possible_dimentions;
 

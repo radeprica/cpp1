@@ -57,66 +57,33 @@ void Puzzle::initialize_from_file(const std::string& input_path)
 
     input_file.close();
 	find_all_possible_right_and_top_matches();
-	permutation = std::vector<int>(6);
+	_permutation = std::vector<unsigned int>(_num_of_pieces);
 	for (int i = 0; i < 6; i++)
-	{ permutation[i]=i;}
-	Puzzle::bla(0,3,2);
+	{ _permutation[i]=i;}
+    for (std::pair<unsigned int, unsigned int> dim : _possible_dimentions)
+    {
+        if (Puzzle::try_solve(0, dim.first, dim.second))
+        {
+            std::cout << "solved!" << std::endl;
+            return;
+        }
+        if (Puzzle::try_solve(0, dim.second, dim.first))
+        {
+            std::cout << "solved!" << std::endl;
+            return;
+        }
+    }
+	
 }
 
-void Puzzle::bla(int k, int row_size, int column_size)
+bool Puzzle::try_solve(unsigned int k,unsigned int row_size, unsigned int column_size)
 {
-	//std::cout<<" curent k: " << k << std::endl;
+	unsigned int k_row =  (int)k/row_size;
+	unsigned int k_column = k%row_size;
 
-	if (k == 6)
-	{ 	
-		int last_piece_index = permutation[k-1];
-		if (!_puzzle_pieces[last_piece_index]->is_br_corner())
-			return;
-		
-		/* already has some piece on top of him */
-		if ((row_size-1) > 0)
-		{
-			int top_of_candidate = permutation[k-1-row_size];
-			if (!_possible_top_matches[last_piece_index][top_of_candidate])
-			{
-				return;
-			}
-		}
-		/* puzzle that is one row */
-		else
-		{
-			if (!_puzzle_pieces[last_piece_index]->is_tr_corner())
-				return;
-		}
-
-		/* already has some piece on left of him */
-		if ((column_size) > 0)
-		{
-			int left_of_candidate = permutation[k-1-1];
-			if (!_possible_right_matches[left_of_candidate][last_piece_index])
-			{
-				return;
-			}
-		}
-		/* puzzle that is one column */
-		else
-		{
-			if (!_puzzle_pieces[last_piece_index]->is_bl_corner())
-				return;
-		}
-
-		std::cout<<"binga!"<<std::endl;
-		return; 
-	
-	}
-
-	int k_row =  (int)k/row_size;
-	int k_column = k%row_size;
-	
-
-	for (int i = k; i < 6; i++)
+	for (unsigned int i = k; i < _num_of_pieces; i++)
 	{
-		int candidate_p = permutation[i];
+		int candidate_p = _permutation[i];
 
 		/* left misgeret */
 		if (k_column == 0)
@@ -145,7 +112,7 @@ void Puzzle::bla(int k, int row_size, int column_size)
 		/* already has some piece on top of him */
 		if (k_row > 0)
 		{
-			int top_of_candidate = permutation[k-row_size];
+			int top_of_candidate = _permutation[k-row_size];
 			if (!_possible_top_matches[candidate_p][top_of_candidate])
 			{
 				continue;
@@ -154,24 +121,54 @@ void Puzzle::bla(int k, int row_size, int column_size)
 		/* already has some piece on left of him */
 		if (k_column > 0)
 		{
-			int left_of_candidate = permutation[k-1];
+			int left_of_candidate = _permutation[k-1];
 			if (!_possible_right_matches[left_of_candidate][candidate_p])
 			{
 				continue;
 			}
 		}
 
-		int temp = permutation[k];
-		permutation[k] = candidate_p;
-		permutation[i] = temp;
+		int temp = _permutation[k];
+		_permutation[k] = candidate_p;
+		_permutation[i] = temp;
 
-		Puzzle::bla(k+1, row_size, column_size);
+        if (k == _num_of_pieces - 1)
+        {
+            std::cout << "solved!";
+            for (unsigned int i = 0; i < _permutation.size(); i++)
+            {
+                if (i % row_size == 0)
+                {
+                    std::cout << std::endl;
+                }
+                std::cout << _permutation[i]+1 << ' ';
+            }
+            std::cout << std::endl;
+            return true;
+        }
+
+        else if (k > _num_of_pieces / 2)
+        {
+            for (unsigned int i = 0; i < k; i++)
+            {
+                if (i % row_size == 0)
+                {
+                    std::cout << std::endl;
+                }
+                std::cout << _permutation[i]+1 << ' ';
+            }
+            std::cout << std::endl;
+        }
+		if (Puzzle::try_solve(k+1, row_size, column_size))
+        {
+            return true;
+        }
 	
-		temp = permutation[i];
-		permutation[i] = permutation[k];
-		permutation[k] = temp;
-
+		temp = _permutation[i];
+		_permutation[i] = _permutation[k];
+		_permutation[k] = temp;
 	}
+    return false;
 }
 void Puzzle::parse_piece_line(const std::string& line)
 {
