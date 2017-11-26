@@ -166,7 +166,7 @@ bool Puzzle::try_solve(unsigned int k,unsigned int row_size, unsigned int column
         {
             for (unsigned int i = 0; i < _permutation.size(); i++)
             {
-                if (i % row_size == 0)
+                if (i != 0 && i % row_size == 0)
                 {
                     LOG << std::endl;
                 }
