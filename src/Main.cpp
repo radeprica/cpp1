@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
 		Puzzle puzzle;
 		puzzle.initialize_from_file(argv[1]);
-		puzzle.print_pieces();
+
 		if(puzzle.had_initialization_errors())
 		{
 			puzzle.log_initialization_errors();
