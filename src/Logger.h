@@ -1,3 +1,6 @@
+#ifndef LOGGER_H
+#define LOGGER_H
+
 #include <memory>
 #include <fstream>
 #include <string>
@@ -20,3 +23,5 @@ private:
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 };
+
+#endif //LOGGER_H

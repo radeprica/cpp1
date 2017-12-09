@@ -15,13 +15,15 @@ enum arguments
 	max_arguments,
 };
 
+#define USAGE "Usage: <program> <input_file> <output_file>\n"
+
 int main(int argc, char* argv[])
 {
 	try
 	{
 		if (argc != arguments::max_arguments)
 		{
-			printf("Wrong usage\n");
+			printf(USAGE);
 			return -1;
 		}
 		
