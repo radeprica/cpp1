@@ -75,13 +75,6 @@ bool Puzzle::solve()
         return false;
     }
 
-	/* solver initial data */
-
-	// compute 2 boolean matrices of legal right matches & legal top matches
-	_find_all_possible_right_and_top_matches();
-
-	_permutation = std::vector<unsigned int>(_num_of_pieces);
-	
     for (std::pair<unsigned int, unsigned int> dim : _possible_dimentions)
     {
         if (Puzzle::_try_solve(0, dim.first, dim.second))
@@ -94,8 +87,8 @@ bool Puzzle::solve()
             return true;
         }
     }
-    // TODO: LOG!!
-    std::cout << no_solution_str << std::endl;
+
+    LOG << no_solution_str << std::endl;
     return false;
 }
 
@@ -118,6 +111,50 @@ int Puzzle::_parse_num_piece_line(const std::string& line)
         throw PuzzleException("Wrong input format in first line");
     }
     return value;
+}
+
+void Puzzle::_parse_piece_line(const std::string& line)
+{
+    unsigned int id;
+    int left, top, right, bottom;
+    std::istringstream iss(line);
+    if (iss.eof())
+    {
+        return;
+    }
+    if (!(iss >> id))
+    {
+        throw PuzzleException("Wrong input format in line: %s", line.c_str());
+    }
+    if (id < 1 || id > _num_of_pieces)
+    {
+        _wrong_id_pieces.push_back(id);
+        return;
+    }
+
+    _missing_ids.remove(id);
+
+    if (!(iss >> left >> top >> right >> bottom) || !iss.eof())
+    {
+        std::pair<unsigned int, std::string> bad_line_pair(id, line);
+        _wrong_format_pieces.push_back(bad_line_pair);
+        return;
+    }
+    if(left < -1 || left > 1 || 
+        top < -1 || top > 1 || 
+        right < -1 || right > 1 || 
+        bottom < -1 || bottom > 1)
+        {
+            std::pair<unsigned int, std::string> bad_line_pair(id, line);
+           _wrong_format_pieces.push_back(bad_line_pair); 
+        }
+    _puzzle_pieces[id-1] = PiecePtr(new Piece(id,
+                                        (PieceSideShape)left, 
+                                        (PieceSideShape)top, 
+                                        (PieceSideShape)right, 
+                                        (PieceSideShape)bottom));
+    _piece_organizer->insert_piece(_puzzle_pieces[id-1]);
+
 }
 
 bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int column_size)
@@ -223,50 +260,6 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
     return false;
 }
 
-void Puzzle::_parse_piece_line(const std::string& line)
-{
-    unsigned int id;
-    int left, top, right, bottom;
-    std::istringstream iss(line);
-    if (iss.eof())
-    {
-        return;
-    }
-    if (!(iss >> id))
-    {
-        throw PuzzleException("Wrong input format in line: %s", line.c_str());
-    }
-    if (id < 1 || id > _num_of_pieces)
-    {
-        _wrong_id_pieces.push_back(id);
-        return;
-    }
-
-    _missing_ids.remove(id);
-
-    if (!(iss >> left >> top >> right >> bottom) || !iss.eof())
-    {
-        std::pair<unsigned int, std::string> bad_line_pair(id, line);
-        _wrong_format_pieces.push_back(bad_line_pair);
-        return;
-    }
-    if(left < -1 || left > 1 || 
-        top < -1 || top > 1 || 
-        right < -1 || right > 1 || 
-        bottom < -1 || bottom > 1)
-        {
-            std::pair<unsigned int, std::string> bad_line_pair(id, line);
-           _wrong_format_pieces.push_back(bad_line_pair); 
-        }
-    _puzzle_pieces[id-1] = PiecePtr(new Piece(id,
-                                        (PieceSideShape)left, 
-                                        (PieceSideShape)top, 
-                                        (PieceSideShape)right, 
-                                        (PieceSideShape)bottom));
-    _piece_organizer->insert_piece(_puzzle_pieces[id-1]);
-
-}
-
 bool Puzzle::had_initialization_errors()
 {
     return (!_missing_ids.empty() ||
@@ -331,26 +324,25 @@ bool Puzzle::_find_and_log_structure_errors()
         ret = true;
     }
 
-    _find_corners_candidates();
-    if (_tl_corner_candids.empty())
+    if (_piece_organizer->get_piece_amount_by_conditions(straight, straight, any_shape, any_shape) == 0)
     {
         LOG << missing_corner_err_str << "TL" << std::endl;
         ret = true;
     }
 
-    if (_tr_corner_candids.empty())
+    if (_piece_organizer->get_piece_amount_by_conditions(any_shape, straight, straight, any_shape) == 0)
     {
         LOG << missing_corner_err_str << "TR" << std::endl;
         ret = true;
     }
 
-    if (_bl_corner_candids.empty())
+    if (_piece_organizer->get_piece_amount_by_conditions(straight, any_shape, any_shape, straight) == 0)
     {
         LOG << missing_corner_err_str << "BL" << std::endl;
         ret = true;
     }
 
-    if (_br_corner_candids.empty())
+    if (_piece_organizer->get_piece_amount_by_conditions(any_shape, any_shape, straight, straight) == 0)
     {
         LOG << missing_corner_err_str << "BR" << std::endl;
         ret = true;
@@ -432,46 +424,4 @@ bool Puzzle::_is_sum_of_edges_not_zero()
     }
 
     return (sum != 0);
-}
-
-void Puzzle::_find_corners_candidates()
-{
-	for (const PiecePtr p : _puzzle_pieces)
-	{
-		if (p->is_tl_corner())
-			_tl_corner_candids.insert(p->get_id());
-		if (p->is_tr_corner())
-			_tr_corner_candids.insert(p->get_id());
-		if (p->is_bl_corner())
-			_bl_corner_candids.insert(p->get_id());
-		if (p->is_br_corner())
-			_br_corner_candids.insert(p->get_id());
-	}
-}
-
-/*
-	compute 2 boolean matrices of legal right matches & legal top matches
-	for all pairs of pieces,
-	[x][y] = 1: piece id y is legal right puzzle connection to piece id x
-	[x][y] = 0: else
-	same logic for legal top
-*/
-void Puzzle::_find_all_possible_right_and_top_matches()
-{
-	_possible_right_matches = std::vector<std::vector<bool>>(_num_of_pieces, std::vector<bool>(_num_of_pieces));
-	_possible_top_matches = std::vector<std::vector<bool>>(_num_of_pieces, std::vector<bool>(_num_of_pieces));
-
-	for (const PiecePtr p1 : _puzzle_pieces)
-	{
-		unsigned int p1_index = p1->get_id() - 1;
-		PieceSideShape right = p1->get_right_side_shape();
-		PieceSideShape top = p1->get_top_side_shape();
-
-		for (const PiecePtr p2 : _puzzle_pieces)
-		{
-			unsigned int p2_index = p2->get_id() - 1;
-			_possible_right_matches[p1_index][p2_index] = Piece::is_possible_edges_match(right, p2->get_left_side_shape());
-			_possible_top_matches[p1_index][p2_index] = Piece::is_possible_edges_match(top, p2->get_bottom_side_shape());
-		}
-	}
 }

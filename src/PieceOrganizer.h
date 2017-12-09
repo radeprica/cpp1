@@ -16,13 +16,19 @@ typedef pair<PiecePtr, RotationDegrees> RotatedPiece;
 class PieceOrganizer
 {
 public:
-    PieceOrganizer() { };
+    PieceOrganizer(bool is_rotate) : _is_rotate(is_rotate) { };
     ~PieceOrganizer() { };
 
     void insert_piece(const PiecePtr& piece);
+    unsigned int get_piece_amount_by_conditions(PieceSideShape left_cond, 
+                                                PieceSideShape top_cond, 
+                                                PieceSideShape right_cond, 
+                                                PieceSideShape bottom_cond);
+
     void print_me();
 
 private:
+    bool _is_rotate;
     array<array<array<array<vector<RotatedPiece>, 3>, 3>, 3>, 3> _organized_pieces;
 
     friend class ConditionalPieceIterator;
