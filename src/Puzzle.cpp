@@ -2,6 +2,7 @@
 #include "Piece.h"
 #include "Exceptions.h"
 #include "Logger.h"
+#include "ConditionalPieceIterator.h"
 
 #include <iostream>
 #include <fstream>
@@ -11,34 +12,23 @@
 #include <cmath>
 
 
+#define SOLUTION_PIECE_IN_PLACE(place) (_solution.at(place).first)
+#define SOLUTION_ROTATION_IN_PLACE(place) (_solution.at(place).second)
+
 void Puzzle::initialize_from_file(const std::string& input_path)
 {
-    static const std::string num_elements_str("NumElements");
-    static const char delim = '=';
-
+    // Open input file
     std::ifstream input_file(input_path);
     if (input_file.fail())
     {
         throw PuzzleException(strerror(errno));
     }
 
-    std::string line, key;
-    unsigned int value;
-    
+    std::string line;
+
     // Parse first line
     std::getline(input_file, line);
-    std::istringstream iss(line); 
-    std::getline(iss, key, delim);
-    if (key.compare(0, num_elements_str.length(), num_elements_str) != 0)
-    {
-        throw PuzzleException("Wrong input format in first line");
-    }
-    if (!(iss >> value) || !iss.eof()) 
-    {
-        throw PuzzleException("Wrong input format in first line");
-    }
-
-    _num_of_pieces = value;
+    _num_of_pieces = _parse_num_piece_line(line);
     _puzzle_pieces = std::vector<PiecePtr>(_num_of_pieces);
 
     // Starting with all pieces missing
@@ -47,22 +37,28 @@ void Puzzle::initialize_from_file(const std::string& input_path)
         _missing_ids.push_back(i);
     }
 
-    // Parse next lines
+    // Parse pieces from file
     while (std::getline(input_file, line))
     {
-        parse_piece_line(line);
+        _parse_piece_line(line);
     }
 	
 	input_file.close();
 
+    // 
     if(had_initialization_errors())
     {
-        log_initialization_errors();
+        _log_initialization_errors();
         return;
     }
-	// compute all possible dimentions for the given num of pieces
-    find_possible_dimentions();
+	
+    // Compute all possible dimentions for the given num of pieces
+    _find_possible_dimentions();
 
+    //TODO: delete this
+    //_piece_organizer->print_me();
+    
+    _solution.resize(_num_of_pieces);
     _is_initialized = true;
 }
 
@@ -74,7 +70,7 @@ bool Puzzle::solve()
     {
         return false;
     }
-    if (find_and_log_structure_errors())
+    if (_find_and_log_structure_errors())
     {
         return false;
     }
@@ -82,112 +78,152 @@ bool Puzzle::solve()
 	/* solver initial data */
 
 	// compute 2 boolean matrices of legal right matches & legal top matches
-	find_all_possible_right_and_top_matches();
+	_find_all_possible_right_and_top_matches();
 
 	_permutation = std::vector<unsigned int>(_num_of_pieces);
 	
     for (std::pair<unsigned int, unsigned int> dim : _possible_dimentions)
     {
-		for (unsigned int i = 0; i < _num_of_pieces; i++)
-		{ _permutation[i]=i;}
-        if (Puzzle::try_solve(0, dim.first, dim.second))
+        if (Puzzle::_try_solve(0, dim.first, dim.second))
         {
             return true;
         }
 
-		for (unsigned int i = 0; i < _num_of_pieces; i++)
-		{ _permutation[i]=i;}
-        if (Puzzle::try_solve(0, dim.second, dim.first))
+        if (Puzzle::_try_solve(0, dim.second, dim.first))
         {
             return true;
         }
     }
-    LOG << no_solution_str << std::endl;
+    // TODO: LOG!!
+    std::cout << no_solution_str << std::endl;
     return false;
 }
 
-bool Puzzle::try_solve(unsigned int k,unsigned int row_size, unsigned int column_size)
+int Puzzle::_parse_num_piece_line(const std::string& line)
+{
+    static const std::string num_elements_str("NumElements");
+    static const char delim = '=';
+
+    std::string key;
+    unsigned int value;
+
+    std::istringstream iss(line); 
+    std::getline(iss, key, delim);
+    if (key.compare(0, num_elements_str.length(), num_elements_str) != 0)
+    {
+        throw PuzzleException("Wrong input format in first line");
+    }
+    if (!(iss >> value) || !iss.eof()) 
+    {
+        throw PuzzleException("Wrong input format in first line");
+    }
+    return value;
+}
+
+bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int column_size)
 {
 	unsigned int k_row =  static_cast<unsigned int>(k/row_size);
 	unsigned int k_column = k%row_size;
 
-	for (unsigned int i = k; i < _num_of_pieces; i++)
-	{
-		unsigned int candidate_p = _permutation[i];
+    PieceSideShape required_left = any_shape;
+    PieceSideShape required_top = any_shape;
+    PieceSideShape required_right = any_shape;
+    PieceSideShape required_bottom = any_shape;
 
-		/* left misgeret */
-		if (k_column == 0)
-		{
-			if (_puzzle_pieces[candidate_p]->get_left_side_shape() != straight)
-				continue;
-		}
-		/* right misgeret */
-		if (k_column == (row_size-1))
-		{
-			if (_puzzle_pieces[candidate_p]->get_right_side_shape() != straight)
-				continue;
-		}
-		/* top misgeret */
-		if (k_row == 0)
-		{
-			if (_puzzle_pieces[candidate_p]->get_top_side_shape() != straight)
-				continue;
-		}
-		/* bottom misgeret */
-		if (k_row == (column_size - 1))
-		{
-			if (_puzzle_pieces[candidate_p]->get_bottom_side_shape() != straight)
-				continue;
-		}
-		/* already has some piece on top of him */
-		if (k_row > 0)
-		{
-			unsigned int top_of_candidate = _permutation[k-row_size];
-			if (!_possible_top_matches[candidate_p][top_of_candidate])
-			{
-				continue;
-			}
-		}
-		/* already has some piece on left of him */
-		if (k_column > 0)
-		{
-			unsigned int left_of_candidate = _permutation[k-1];
-			if (!_possible_right_matches[left_of_candidate][candidate_p])
-			{
-				continue;
-			}
-		}
+    // we're building the solution from the top left, so there is always a demand on the left side of the piece we choose
+    if (k_column == 0 || 
+        SOLUTION_PIECE_IN_PLACE(k - 1)->get_right_side_shape(SOLUTION_ROTATION_IN_PLACE(k - 1)) == straight)
+    {
+        required_left = straight;
+    }
+    else if (SOLUTION_PIECE_IN_PLACE(k - 1)->get_right_side_shape(SOLUTION_ROTATION_IN_PLACE(k - 1)) == male)
+    {
+        required_left = female;
+    }
+    else
+    {
+        required_left = male;
+    }
 
-		unsigned int temp = _permutation[k];
-		_permutation[k] = candidate_p;
-		_permutation[i] = temp;
+    // we're building the solution from the top left, so there is always a demand on the top side of the piece we choose
+    if (k_row == 0 || 
+    (k >= row_size && 
+    SOLUTION_PIECE_IN_PLACE(k - row_size)->get_bottom_side_shape(SOLUTION_ROTATION_IN_PLACE(k - row_size)) == straight))
+    {
+        required_top = straight;
+    }
+    else if (k >= row_size && 
+    SOLUTION_PIECE_IN_PLACE(k - row_size)->get_bottom_side_shape(SOLUTION_ROTATION_IN_PLACE(k - row_size)) == male)
+    {
+        required_top = female;
+    }
+    else
+    {
+        required_top = male;
+    }
 
-        if (k == _num_of_pieces - 1)
+    // if we are at the right edge of the puzzle, demand stragiht right edge in the piece
+    if (k_column == (row_size - 1))
+    {
+        required_right = straight;
+    }
+
+    // if we are at the bottom of the puzzle, demand stragiht bottom edge in the piece
+    if (k_row == (column_size - 1))
+    {
+        required_bottom = straight;
+    }
+
+    ConditionalPieceIterator it(_piece_organizer, 
+                                required_left,
+                                required_top,
+                                required_right,
+                                required_bottom);
+
+    // if we are at the last piece
+    if (k == _num_of_pieces - 1)
+    {
+        RotatedPiece candidate = it.get_and_mark_unavailable_next();
+        // if there is no matching piece, we failed
+        if (candidate.first.get() == nullptr)
         {
-            for (unsigned int i = 0; i < _permutation.size(); i++)
+            return false;
+        }
+        
+        _solution[k] = candidate;
+        // TODO: function print solution
+        for (unsigned int i = 0; i < _num_of_pieces; i++)
+        {
+            if (i != 0 && i % row_size == 0)
             {
-                if (i != 0 && i % row_size == 0)
-                {
-                    LOG << std::endl;
-                }
-                LOG << _permutation[i]+1 << ' ';
+                LOG << std::endl;
             }
-            LOG << std::endl;
-            return true;
+            LOG << _solution[i].first->get_id() << '(' << _solution[i].second << ") ";
         }
-		
-		if (Puzzle::try_solve(k+1, row_size, column_size))
+        LOG << std::endl;
+        return true;
+    }
+
+    for (RotatedPiece candidate = it.get_and_mark_unavailable_next(); 
+        candidate.first.get() != nullptr; 
+        candidate = it.get_and_mark_unavailable_next())
+    {
+        _solution[k] = candidate;
+        // if we can solve with this piece in this location, we continue
+        if (_try_solve(k + 1, row_size, column_size))
         {
             return true;
         }
-	
-		temp = _permutation[i];
-		_permutation[i] = _permutation[k];
-		_permutation[k] = temp;
-	}
+        // if we can't solve with this piece in this location, we put it back in the pool and try the next possibility
+        it.mark_available(candidate);
+        // std::cout << "back" << std::endl;
+    }
+    
+    // if no piece is good, we failed..
     return false;
 }
-void Puzzle::parse_piece_line(const std::string& line)
+
+void Puzzle::_parse_piece_line(const std::string& line)
 {
     unsigned int id;
     int left, top, right, bottom;
@@ -227,6 +263,7 @@ void Puzzle::parse_piece_line(const std::string& line)
                                         (PieceSideShape)top, 
                                         (PieceSideShape)right, 
                                         (PieceSideShape)bottom));
+    _piece_organizer->insert_piece(_puzzle_pieces[id-1]);
 
 }
 
@@ -237,7 +274,7 @@ bool Puzzle::had_initialization_errors()
             !_wrong_id_pieces.empty());
 }
 
-void Puzzle::log_initialization_errors()
+void Puzzle::_log_initialization_errors()
 {
     if (!_missing_ids.empty())
     {
@@ -280,7 +317,7 @@ void Puzzle::log_initialization_errors()
     }
 }
 
-bool Puzzle::find_and_log_structure_errors()
+bool Puzzle::_find_and_log_structure_errors()
 {
     static const std::string num_edges_err_str("Cannot solve puzzle: wrong number of straight edges");
     static const std::string missing_corner_err_str("Cannot solve puzzle: missing corner element: ");
@@ -288,13 +325,13 @@ bool Puzzle::find_and_log_structure_errors()
 
     bool ret = false;
 
-    if (is_wrong_number_of_straight_edges())
+    if (_is_wrong_number_of_straight_edges())
     {
         LOG << num_edges_err_str << std::endl;
         ret = true;
     }
 
-    find_corners_candidates();
+    _find_corners_candidates();
     if (_tl_corner_candids.empty())
     {
         LOG << missing_corner_err_str << "TL" << std::endl;
@@ -319,7 +356,7 @@ bool Puzzle::find_and_log_structure_errors()
         ret = true;
     }
 
-    if (is_sum_of_edges_not_zero())
+    if (_is_sum_of_edges_not_zero())
     {
         LOG << sum_edges_err_str << std::endl;
         ret = true;
@@ -328,7 +365,7 @@ bool Puzzle::find_and_log_structure_errors()
     return ret;
 }
 
-void Puzzle::find_possible_dimentions()
+void Puzzle::_find_possible_dimentions()
 {
     unsigned int i = 0;
 
@@ -342,7 +379,7 @@ void Puzzle::find_possible_dimentions()
     }
 }
 
-bool Puzzle::is_wrong_number_of_straight_edges()
+bool Puzzle::_is_wrong_number_of_straight_edges()
 {
     unsigned int num_left_straight = 0, num_top_straight = 0, num_right_straight = 0 , num_bottom_straight = 0;
 
@@ -382,7 +419,7 @@ bool Puzzle::is_wrong_number_of_straight_edges()
     return true;
 }
 
-bool Puzzle::is_sum_of_edges_not_zero()
+bool Puzzle::_is_sum_of_edges_not_zero()
 {
     unsigned int sum = 0;
 
@@ -397,7 +434,7 @@ bool Puzzle::is_sum_of_edges_not_zero()
     return (sum != 0);
 }
 
-void Puzzle::find_corners_candidates()
+void Puzzle::_find_corners_candidates()
 {
 	for (const PiecePtr p : _puzzle_pieces)
 	{
@@ -419,7 +456,7 @@ void Puzzle::find_corners_candidates()
 	[x][y] = 0: else
 	same logic for legal top
 */
-void Puzzle::find_all_possible_right_and_top_matches()
+void Puzzle::_find_all_possible_right_and_top_matches()
 {
 	_possible_right_matches = std::vector<std::vector<bool>>(_num_of_pieces, std::vector<bool>(_num_of_pieces));
 	_possible_top_matches = std::vector<std::vector<bool>>(_num_of_pieces, std::vector<bool>(_num_of_pieces));
