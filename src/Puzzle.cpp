@@ -410,6 +410,26 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
 
         if (_is_rotate)
         {
+            /* more "general" check, more strict is similiar to solving/some NP problem */
+            unsigned int bank_for_lefts = num_left_straight + num_top_straight + num_bottom_straight;
+            unsigned int bank_for_rights = num_right_straight + num_top_straight + num_bottom_straight;
+            unsigned int bank_for_tops = num_top_straight + num_left_straight + num_right_straight;
+            unsigned int bank_for_bottoms = num_bottom_straight + num_left_straight + num_right_straight;
+
+            unsigned int total_straights = num_left_straight + num_right_straight + num_top_straight + num_bottom_straight;
+
+            if ((bank_for_lefts >= dim.first) && (bank_for_rights >= dim.first) && (bank_for_bottoms >= dim.second)
+                && (bank_for_tops >= dim.second) && (total_straights >= (2*dim.first + 2*dim.second)))
+            {
+                return false;
+            }
+            if ((bank_for_lefts >= dim.second) && (bank_for_rights >= dim.second) && (bank_for_bottoms >= dim.first)
+                && (bank_for_tops >= dim.first) && (total_straights >= (2*dim.first + 2*dim.second)))
+            {
+                return false;
+            }
+
+            /*
             int left_needed = dim.first - num_left_straight;
             int right_needed = dim.first - num_right_straight;
             int top_needed = dim.second - num_top_straight;
@@ -441,6 +461,7 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
             {
                 return false;
             }
+            */
         }
     }
     

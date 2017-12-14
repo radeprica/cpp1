@@ -43,6 +43,8 @@ private:
     std::vector<RotatedPiece> _solution;
     PieceOrganizerPtr _piece_organizer;
 
+    bool _is_rotate;
+
 private:
 	Puzzle(const Puzzle&) = delete;
 	Puzzle& operator=(const Puzzle&) = delete;
