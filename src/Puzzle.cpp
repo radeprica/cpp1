@@ -407,7 +407,43 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
             {
                 return false;
             }
+
+        if (_is_rotate)
+        {
+            int left_needed = dim.first - num_left_straight;
+            int right_needed = dim.first - num_right_straight;
+            int top_needed = dim.second - num_top_straight;
+            int bottom_needed = dim.second - num_bottom_straight;
+
+            int top_bottom_bank = std::max(-1*top_needed, 0) + std::max(-1*bottom_needed, 0);
+            int left_right_bank = std::max(-1*left_needed, 0) + std::max(-1*right_needed, 0);
+
+            int left_right_needed = std::max(left_needed, 0) + std::max(right_needed, 0);
+            int top_bottom_needed = std::max(top_needed, 0) + std::max(bottom_needed, 0);
+
+            if ((top_bottom_bank - left_right_needed >= 0) && (left_right_bank - top_bottom_needed >= 0))
+            {
+                return false;
+            }
+
+            left_needed = dim.second - num_left_straight;
+            right_needed = dim.second - num_right_straight;
+            top_needed = dim.first - num_top_straight;
+            bottom_needed = dim.first - num_bottom_straight;
+
+            top_bottom_bank = std::max(-1*top_needed, 0) + std::max(-1*bottom_needed, 0);
+            left_right_bank = std::max(-1*left_needed, 0) + std::max(-1*right_needed, 0);
+
+            left_right_needed = std::max(left_needed, 0) + std::max(right_needed, 0);
+            top_bottom_needed = std::max(top_needed, 0) + std::max(bottom_needed, 0);
+
+            if ((top_bottom_bank - left_right_needed >= 0) && (left_right_bank - top_bottom_needed >= 0))
+            {
+                return false;
+            }
+        }
     }
+    
     return true;
 }
 

@@ -12,7 +12,7 @@
 class Puzzle
 {
 public:
-    Puzzle(bool is_rotate) : _piece_organizer(new PieceOrganizer(is_rotate)) { }
+    Puzzle(bool is_rotate) : _piece_organizer(new PieceOrganizer(is_rotate)), _is_rotate(is_rotate) { }
     ~Puzzle() { }
 
     void initialize_from_file(const std::string& input_path);
