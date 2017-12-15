@@ -237,13 +237,17 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
             }
             if (_solution[i].second != no_rotation)
             {
-                LOG << _solution[i].first->get_id() << '[' << _solution[i].second << "] ";
+                LOG << _solution[i].first->get_id() << '[' << _solution[i].second << "]";
             }
             else
             {
-                LOG << _solution[i].first->get_id() << " ";
+                LOG << _solution[i].first->get_id();
             }
-            
+
+            if (i % row_size != (row_size-1))
+            {
+                LOG << " ";
+            }
         }
         LOG << std::endl;
         return true;
@@ -436,71 +440,11 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
 
         if (_is_rotate)
         {
-            /* TODO: delete this comment FFS so "flip" is "reflect" and not 180 rotation?
-                more speciefic calculations (aka taking each piece has more than 1 straight edge only once and checking all those combinations)
-                has huge complexity
-            */
             unsigned int total_straights = num_left_straight + num_right_straight + num_top_straight + num_bottom_straight;
             if (total_straights >= (2*dim.first + 2*dim.second))
             {
                 return false;
             }
-
-            /* more "general" check, more strict is similiar to solving/some NP problem */
-            /*
-            unsigned int bank_for_lefts = num_left_straight + num_top_straight + num_bottom_straight;
-            unsigned int bank_for_rights = num_right_straight + num_top_straight + num_bottom_straight;
-            unsigned int bank_for_tops = num_top_straight + num_left_straight + num_right_straight;
-            unsigned int bank_for_bottoms = num_bottom_straight + num_left_straight + num_right_straight;
-
-            unsigned int total_straights = num_left_straight + num_right_straight + num_top_straight + num_bottom_straight;
-
-            if ((bank_for_lefts >= dim.first) && (bank_for_rights >= dim.first) && (bank_for_bottoms >= dim.second)
-                && (bank_for_tops >= dim.second) && (total_straights >= (2*dim.first + 2*dim.second)))
-            {
-                return false;
-            }
-            if ((bank_for_lefts >= dim.second) && (bank_for_rights >= dim.second) && (bank_for_bottoms >= dim.first)
-                && (bank_for_tops >= dim.first) && (total_straights >= (2*dim.first + 2*dim.second)))
-            {
-                return false;
-            }
-            */
-
-
-            /*
-            int left_needed = dim.first - num_left_straight;
-            int right_needed = dim.first - num_right_straight;
-            int top_needed = dim.second - num_top_straight;
-            int bottom_needed = dim.second - num_bottom_straight;
-
-            int top_bottom_bank = std::max(-1*top_needed, 0) + std::max(-1*bottom_needed, 0);
-            int left_right_bank = std::max(-1*left_needed, 0) + std::max(-1*right_needed, 0);
-
-            int left_right_needed = std::max(left_needed, 0) + std::max(right_needed, 0);
-            int top_bottom_needed = std::max(top_needed, 0) + std::max(bottom_needed, 0);
-
-            if ((top_bottom_bank - left_right_needed >= 0) && (left_right_bank - top_bottom_needed >= 0))
-            {
-                return false;
-            }
-
-            left_needed = dim.second - num_left_straight;
-            right_needed = dim.second - num_right_straight;
-            top_needed = dim.first - num_top_straight;
-            bottom_needed = dim.first - num_bottom_straight;
-
-            top_bottom_bank = std::max(-1*top_needed, 0) + std::max(-1*bottom_needed, 0);
-            left_right_bank = std::max(-1*left_needed, 0) + std::max(-1*right_needed, 0);
-
-            left_right_needed = std::max(left_needed, 0) + std::max(right_needed, 0);
-            top_bottom_needed = std::max(top_needed, 0) + std::max(bottom_needed, 0);
-
-            if ((top_bottom_bank - left_right_needed >= 0) && (left_right_bank - top_bottom_needed >= 0))
-            {
-                return false;
-            }
-            */
         }
     }
     
