@@ -235,7 +235,15 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
             {
                 LOG << std::endl;
             }
-            LOG << _solution[i].first->get_id() << '(' << _solution[i].second << ") ";
+            if (_solution[i].second != no_rotation)
+            {
+                LOG << _solution[i].first->get_id() << '[' << _solution[i].second << "] ";
+            }
+            else
+            {
+                LOG << _solution[i].first->get_id() << " ";
+            }
+            
         }
         LOG << std::endl;
         return true;
@@ -324,28 +332,46 @@ bool Puzzle::_find_and_log_structure_errors()
         ret = true;
     }
 
-    if (_piece_organizer->get_piece_amount_by_conditions(straight, straight, any_shape, any_shape) == 0)
+    unsigned int tl_amount = _piece_organizer->get_piece_amount_by_conditions(straight, straight, any_shape, any_shape);
+    unsigned int tr_amount = _piece_organizer->get_piece_amount_by_conditions(any_shape, straight, straight, any_shape);
+    unsigned int bl_amount = _piece_organizer->get_piece_amount_by_conditions(straight, any_shape, any_shape, straight);
+    unsigned int br_amount = _piece_organizer->get_piece_amount_by_conditions(any_shape, any_shape, straight, straight);
+    unsigned int total_corners = tl_amount + tr_amount + bl_amount + br_amount;
+
+    if (tl_amount == 0)
     {
-        LOG << missing_corner_err_str << "TL" << std::endl;
-        ret = true;
+        if (!_is_rotate || (total_corners < 4))
+        {
+            LOG << missing_corner_err_str << "TL" << std::endl;
+            ret = true;
+        }
     }
 
-    if (_piece_organizer->get_piece_amount_by_conditions(any_shape, straight, straight, any_shape) == 0)
+    if (tr_amount == 0)
     {
-        LOG << missing_corner_err_str << "TR" << std::endl;
-        ret = true;
+        if (!_is_rotate || (total_corners < 4))
+        {
+            LOG << missing_corner_err_str << "TR" << std::endl;
+            ret = true;
+        }
     }
 
-    if (_piece_organizer->get_piece_amount_by_conditions(straight, any_shape, any_shape, straight) == 0)
+    if (bl_amount == 0)
     {
-        LOG << missing_corner_err_str << "BL" << std::endl;
-        ret = true;
+        if (!_is_rotate || (total_corners < 4))
+        {
+            LOG << missing_corner_err_str << "BL" << std::endl;
+            ret = true;
+        }
     }
 
-    if (_piece_organizer->get_piece_amount_by_conditions(any_shape, any_shape, straight, straight) == 0)
+    if (br_amount == 0)
     {
-        LOG << missing_corner_err_str << "BR" << std::endl;
-        ret = true;
+        if (!_is_rotate || (total_corners < 4))
+        {
+            LOG << missing_corner_err_str << "BR" << std::endl;
+            ret = true;
+        }
     }
 
     if (_is_sum_of_edges_not_zero())
@@ -441,7 +467,7 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
             }
             */
 
-            
+
             /*
             int left_needed = dim.first - num_left_straight;
             int right_needed = dim.first - num_right_straight;
