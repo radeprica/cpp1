@@ -410,7 +410,18 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
 
         if (_is_rotate)
         {
+            /* TODO: delete this comment FFS so "flip" is "reflect" and not 180 rotation?
+                more speciefic calculations (aka taking each piece has more than 1 straight edge only once and checking all those combinations)
+                has huge complexity
+            */
+            unsigned int total_straights = num_left_straight + num_right_straight + num_top_straight + num_bottom_straight;
+            if (total_straights >= (2*dim.first + 2*dim.second))
+            {
+                return false;
+            }
+
             /* more "general" check, more strict is similiar to solving/some NP problem */
+            /*
             unsigned int bank_for_lefts = num_left_straight + num_top_straight + num_bottom_straight;
             unsigned int bank_for_rights = num_right_straight + num_top_straight + num_bottom_straight;
             unsigned int bank_for_tops = num_top_straight + num_left_straight + num_right_straight;
@@ -428,7 +439,9 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
             {
                 return false;
             }
+            */
 
+            
             /*
             int left_needed = dim.first - num_left_straight;
             int right_needed = dim.first - num_right_straight;
