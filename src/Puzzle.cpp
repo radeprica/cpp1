@@ -11,9 +11,10 @@
 #include <cstring>
 #include <cmath>
 
-
-#define SOLUTION_PIECE_IN_PLACE(place) (_solution.at(place).first)
-#define SOLUTION_ROTATION_IN_PLACE(place) (_solution.at(place).second)
+//#define SOLUTION_PIECE_IN_PLACE(place) (_solution.at(place).first)
+#define WORKER_SOLUTION_PIECE_IN_PLACE(worker_id, place) (_solution_by_worker.at(worker_id).at(place).first)
+//#define SOLUTION_ROTATION_IN_PLACE(place) (_solution.at(place).second)
+#define WORKER_SOLUTION_ROTATION_IN_PLACE(worker_id, place) (_solution_by_worker.at(worker_id).at(place).second)
 
 void Puzzle::initialize_from_file(const std::string& input_path)
 {
@@ -29,8 +30,20 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     // Parse first line
     std::getline(input_file, line);
     _num_of_pieces = _parse_num_piece_line(line);
-    _puzzle_pieces = std::vector<PiecePtr>(_num_of_pieces);
 
+    _num_of_threads = 6; //todo change this to console arg
+
+    _solution_by_worker.resize(_num_of_threads-1);
+    _piece_organizer_of_worker.resize(_num_of_threads-1);
+    _puzzle_pieces_of_worker.resize(_num_of_threads-1);
+    _cur_row_size_of_worker.resize(_num_of_threads-1);
+
+    for (unsigned worker_id = 0; worker_id < _num_of_threads-1; worker_id++)
+    {
+        _solution_by_worker[worker_id] = std::vector<RotatedPiece>(_num_of_pieces);
+        _piece_organizer_of_worker[worker_id] = PieceOrganizerPtr(new PieceOrganizer(_is_rotate));
+        _puzzle_pieces_of_worker[worker_id] = std::vector<PiecePtr>(_num_of_pieces);
+    }
     // Starting with all pieces missing
     for (unsigned int i = 1; i <= _num_of_pieces; i++)
     {
@@ -58,7 +71,9 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     //TODO: delete this
     //_piece_organizer->print_me();
     
-    _solution.resize(_num_of_pieces);
+    //_solution.resize(_num_of_pieces);
+    
+    // init is done
     _is_initialized = true;
 }
 
@@ -75,23 +90,84 @@ bool Puzzle::solve()
         return false;
     }
 
+    for (unsigned int i = 0; i < _num_of_threads-1 ; i++)
+    {
+        _worker_threads.push_back(std::thread(&Puzzle::_thread_solve, this, i));
+    }
+    for (unsigned int i = 0; i < _num_of_threads-1; i++)
+    {
+        _worker_threads[i].join();
+    }
+
+    /*
     for (std::pair<unsigned int, unsigned int> dim : _possible_dimentions)
     {
-        if (Puzzle::_try_solve(0, dim.first, dim.second))
+        if (Puzzle::_try_solve(_num_of_threads-1, 0, dim.first, dim.second))
         {
             return true;
         }
 
-        if (Puzzle::_try_solve(0, dim.second, dim.first))
+        if (Puzzle::_try_solve(_num_of_threads-1, 0, dim.second, dim.first))
         {
             return true;
         }
     }
+    */
 
+    for (unsigned int r = 0; r< _num_of_threads; r++)
+    {
+        LOG << "thread " << r << " last row size " << _cur_row_size_of_worker[r] << std::endl;
+    }
+    if (_worker_solved >= 0)
+    {
+        // print the solution
+        unsigned int row_size = _cur_row_size_of_worker[_worker_solved];
+        for (unsigned int i = 0; i < _num_of_pieces; i++)
+        {
+            if (i != 0 && i % row_size == 0)
+            {
+                LOG << std::endl;
+            }
+            if (_solution_by_worker[_worker_solved][i].second != no_rotation)
+            {
+                LOG << _solution_by_worker[_worker_solved][i].first->get_id() << '[' << _solution_by_worker[_worker_solved][i].second << "]";
+            }
+            else
+            {
+                LOG << _solution_by_worker[_worker_solved][i].first->get_id();
+            }
+
+            if (i % row_size != (row_size-1))
+            {
+                LOG << " ";
+            }
+        }
+        return true;
+    }
     LOG << no_solution_str << std::endl;
     return false;
 }
 
+void Puzzle::_thread_solve(unsigned int worker_id)
+{
+    int total_dims = _possible_dimentions.size();
+    while (_worker_solved < 0)
+    {
+        int next_dim_in_line = ++_next_in_line;
+        if (next_dim_in_line >= total_dims)
+        {
+            break;
+        }
+        
+        std::pair<unsigned int, unsigned int> dim = _possible_dimentions[next_dim_in_line];
+        _cur_row_size_of_worker[worker_id] = dim.first;
+        if (Puzzle::_try_solve(worker_id, 0, dim.first, dim.second))
+        {
+            _worker_solved = worker_id; //TODO cast from unsigned to int
+            break;
+        }
+    }
+}
 int Puzzle::_parse_num_piece_line(const std::string& line)
 {
     static const std::string num_elements_str("NumElements");
@@ -148,17 +224,26 @@ void Puzzle::_parse_piece_line(const std::string& line)
             std::pair<unsigned int, std::string> bad_line_pair(id, line);
            _wrong_format_pieces.push_back(bad_line_pair); 
         }
-    _puzzle_pieces[id-1] = PiecePtr(new Piece(id,
-                                        (PieceSideShape)left, 
-                                        (PieceSideShape)top, 
-                                        (PieceSideShape)right, 
-                                        (PieceSideShape)bottom));
-    _piece_organizer->insert_piece(_puzzle_pieces[id-1]);
 
+    for (unsigned int worker_id=0; worker_id < _num_of_threads-1; worker_id++)
+    {
+        _puzzle_pieces_of_worker[worker_id][id-1] = PiecePtr(new Piece(id,
+                                                        (PieceSideShape)left, 
+                                                        (PieceSideShape)top, 
+                                                        (PieceSideShape)right, 
+                                                        (PieceSideShape)bottom));
+        (_piece_organizer_of_worker[worker_id])->insert_piece(_puzzle_pieces_of_worker[worker_id][id-1]);
+    }
 }
 
-bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int column_size)
+bool Puzzle::_try_solve(unsigned int worker_id, unsigned int k,unsigned int row_size, unsigned int column_size)
 {
+    // if some other worker already found a solution, our work is done
+    if (_worker_solved >= 0)
+    {
+        return false;
+    }
+    
 	unsigned int k_row =  static_cast<unsigned int>(k/row_size);
 	unsigned int k_column = k%row_size;
 
@@ -169,11 +254,11 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
 
     // we're building the solution from the top left, so there is always a demand on the left side of the piece we choose
     if (k_column == 0 || 
-        SOLUTION_PIECE_IN_PLACE(k - 1)->get_right_side_shape(SOLUTION_ROTATION_IN_PLACE(k - 1)) == straight)
+        WORKER_SOLUTION_PIECE_IN_PLACE(worker_id, k - 1)->get_right_side_shape(WORKER_SOLUTION_ROTATION_IN_PLACE(worker_id, k - 1)) == straight)
     {
         required_left = straight;
     }
-    else if (SOLUTION_PIECE_IN_PLACE(k - 1)->get_right_side_shape(SOLUTION_ROTATION_IN_PLACE(k - 1)) == male)
+    else if (WORKER_SOLUTION_PIECE_IN_PLACE(worker_id, k - 1)->get_right_side_shape(WORKER_SOLUTION_ROTATION_IN_PLACE(worker_id, k - 1)) == male)
     {
         required_left = female;
     }
@@ -185,12 +270,12 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
     // we're building the solution from the top left, so there is always a demand on the top side of the piece we choose
     if (k_row == 0 || 
     (k >= row_size && 
-    SOLUTION_PIECE_IN_PLACE(k - row_size)->get_bottom_side_shape(SOLUTION_ROTATION_IN_PLACE(k - row_size)) == straight))
+    WORKER_SOLUTION_PIECE_IN_PLACE(worker_id, k - row_size)->get_bottom_side_shape(WORKER_SOLUTION_ROTATION_IN_PLACE(worker_id, k - row_size)) == straight))
     {
         required_top = straight;
     }
     else if (k >= row_size && 
-    SOLUTION_PIECE_IN_PLACE(k - row_size)->get_bottom_side_shape(SOLUTION_ROTATION_IN_PLACE(k - row_size)) == male)
+    WORKER_SOLUTION_PIECE_IN_PLACE(worker_id, k - row_size)->get_bottom_side_shape(WORKER_SOLUTION_ROTATION_IN_PLACE(worker_id, k - row_size)) == male)
     {
         required_top = female;
     }
@@ -211,7 +296,7 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
         required_bottom = straight;
     }
 
-    ConditionalPieceIterator it(_piece_organizer, 
+    ConditionalPieceIterator it(_piece_organizer_of_worker[worker_id], 
                                 required_left,
                                 required_top,
                                 required_right,
@@ -227,21 +312,22 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
             return false;
         }
         
-        _solution[k] = candidate;
+        _solution_by_worker[worker_id][k] = candidate;
         // TODO: function print solution
+        /*
         for (unsigned int i = 0; i < _num_of_pieces; i++)
         {
             if (i != 0 && i % row_size == 0)
             {
                 LOG << std::endl;
             }
-            if (_solution[i].second != no_rotation)
+            if (_solution_by_worker[worker_id][i].second != no_rotation)
             {
-                LOG << _solution[i].first->get_id() << '[' << _solution[i].second << "]";
+                LOG << _solution_by_worker[worker_id][i].first->get_id() << '[' << _solution_by_worker[worker_id][i].second << "]";
             }
             else
             {
-                LOG << _solution[i].first->get_id();
+                LOG << _solution_by_worker[worker_id][i].first->get_id();
             }
 
             if (i % row_size != (row_size-1))
@@ -249,6 +335,7 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
                 LOG << " ";
             }
         }
+        */
         LOG << std::endl;
         return true;
     }
@@ -257,9 +344,15 @@ bool Puzzle::_try_solve(unsigned int k,unsigned int row_size, unsigned int colum
         candidate.first.get() != nullptr; 
         candidate = it.get_and_mark_unavailable_next())
     {
-        _solution[k] = candidate;
+        // if some other worker already found a solution, our work is done
+        if (_worker_solved >= 0)
+        {
+            return false;
+        }
+
+        _solution_by_worker[worker_id][k] = candidate;
         // if we can solve with this piece in this location, we continue
-        if (_try_solve(k + 1, row_size, column_size))
+        if (_try_solve(worker_id, k + 1, row_size, column_size))
         {
             return true;
         }
@@ -336,10 +429,10 @@ bool Puzzle::_find_and_log_structure_errors()
         ret = true;
     }
 
-    unsigned int tl_amount = _piece_organizer->get_piece_amount_by_conditions(straight, straight, any_shape, any_shape);
-    unsigned int tr_amount = _piece_organizer->get_piece_amount_by_conditions(any_shape, straight, straight, any_shape);
-    unsigned int bl_amount = _piece_organizer->get_piece_amount_by_conditions(straight, any_shape, any_shape, straight);
-    unsigned int br_amount = _piece_organizer->get_piece_amount_by_conditions(any_shape, any_shape, straight, straight);
+    unsigned int tl_amount = _piece_organizer_of_worker[0]->get_piece_amount_by_conditions(straight, straight, any_shape, any_shape);
+    unsigned int tr_amount = _piece_organizer_of_worker[0]->get_piece_amount_by_conditions(any_shape, straight, straight, any_shape);
+    unsigned int bl_amount = _piece_organizer_of_worker[0]->get_piece_amount_by_conditions(straight, any_shape, any_shape, straight);
+    unsigned int br_amount = _piece_organizer_of_worker[0]->get_piece_amount_by_conditions(any_shape, any_shape, straight, straight);
     unsigned int total_corners = tl_amount + tr_amount + bl_amount + br_amount;
 
     if (tl_amount == 0)
@@ -396,7 +489,12 @@ void Puzzle::_find_possible_dimentions()
         if(_num_of_pieces % i == 0)
         {
             std::pair<unsigned int, unsigned int> dimenstions(i, _num_of_pieces / i);
-			_possible_dimentions.push_front(dimenstions);
+			_possible_dimentions.push_back(dimenstions);
+            if ((_num_of_pieces / i) != i)
+            {
+                std::pair<unsigned int, unsigned int> dimenstions_reversed(_num_of_pieces / i, i);
+                _possible_dimentions.push_back(dimenstions_reversed);
+            }
         }
     }
 }
@@ -405,7 +503,7 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
 {
     unsigned int num_left_straight = 0, num_top_straight = 0, num_right_straight = 0 , num_bottom_straight = 0;
 
-    for (const PiecePtr p : _puzzle_pieces)
+    for (const PiecePtr p : _puzzle_pieces_of_worker[0])
     {
         if (p->get_top_side_shape() == straight)
 		{
@@ -432,12 +530,14 @@ bool Puzzle::_is_wrong_number_of_straight_edges()
             {
                 return false;
             }
+        /* reversed dims are in possible dims since migration to threads
+
         if (num_left_straight >= dim.second && num_right_straight >= dim.second &&
             num_top_straight >= dim.first && num_bottom_straight >= dim.first)
             {
                 return false;
             }
-
+        */
         if (_is_rotate)
         {
             unsigned int total_straights = num_left_straight + num_right_straight + num_top_straight + num_bottom_straight;
@@ -455,7 +555,7 @@ bool Puzzle::_is_sum_of_edges_not_zero()
 {
     unsigned int sum = 0;
 
-    for (const PiecePtr p : _puzzle_pieces)
+    for (const PiecePtr p : _puzzle_pieces_of_worker[0])
     {
         sum += static_cast<int>(p->get_left_side_shape());
         sum += static_cast<int>(p->get_top_side_shape());

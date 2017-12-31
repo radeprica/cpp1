@@ -3,12 +3,12 @@ COMP = g++
 #put all your object files here
 OBJS = Logger.o Exceptions.o Piece.o Puzzle.o PieceOrganizer.o ConditionalPieceIterator.o
 #The executabel filename DON'T CHANGE
-EXEC = ex2
+EXEC = ex3
 CPP_COMP_FLAG = -std=c++14 -Wall -Wextra \
 -Werror -pedantic-errors -DNDEBUG -g -O0
 
 $(EXEC): Main.cpp $(OBJS)
-	$(COMP) Main.cpp $(OBJS) $(CPP_COMP_FLAG) -o $@
+	$(COMP) Main.cpp $(OBJS) $(CPP_COMP_FLAG) -o $@ -pthread
 #a rule for building a simple c++ source file
 #use g++ -MM main.cpp to see dependencies
 Puzzle.o: Puzzle.cpp PieceOrganizer.o Piece.o Exceptions.o

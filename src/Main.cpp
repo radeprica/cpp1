@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 
 		Logger::set_logger(output_file_path);
 
-		Puzzle puzzle(rotate);
+		Puzzle puzzle(rotate, 4);
 		puzzle.initialize_from_file(input_file_path);
 
 		if(puzzle.had_initialization_errors())
