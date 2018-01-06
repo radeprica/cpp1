@@ -1,14 +1,14 @@
 #for nova should be g++-5.3.0
-COMP = g++
+COMP = g++-5.3.0
 #put all your object files here
 OBJS = PuzzleArguments.o Logger.o Exceptions.o Piece.o Puzzle.o PieceOrganizer.o ConditionalPieceIterator.o
 #The executabel filename DON'T CHANGE
 EXEC = ex3
 CPP_COMP_FLAG = -std=c++14 -Wall -Wextra \
--Werror -pedantic-errors -DNDEBUG -g -O0
+-Werror -pedantic-errors -DNDEBUG -g -O0 -pthread
 
 $(EXEC): Main.cpp $(OBJS)
-	$(COMP) Main.cpp $(OBJS) $(CPP_COMP_FLAG) -o $@ -pthread
+	$(COMP) Main.cpp $(OBJS) $(CPP_COMP_FLAG) -o $@
 #a rule for building a simple c++ source file
 #use g++ -MM main.cpp to see dependencies
 Puzzle.o: Puzzle.cpp PieceOrganizer.o Piece.o Exceptions.o
