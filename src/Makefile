@@ -1,7 +1,7 @@
 #for nova should be g++-5.3.0
 COMP = g++
 #put all your object files here
-OBJS = Logger.o Exceptions.o Piece.o Puzzle.o PieceOrganizer.o ConditionalPieceIterator.o
+OBJS = PuzzleArguments.o Logger.o Exceptions.o Piece.o Puzzle.o PieceOrganizer.o ConditionalPieceIterator.o
 #The executabel filename DON'T CHANGE
 EXEC = ex3
 CPP_COMP_FLAG = -std=c++14 -Wall -Wextra \
@@ -23,7 +23,8 @@ Exceptions.o: Exceptions.cpp
 	$(COMP) $(CPP_COMP_FLAG) -c $*.cpp
 Logger.o: Logger.cpp
 	$(COMP) $(CPP_COMP_FLAG) -c $*.cpp
-
+PuzzleArguments.o: PuzzleArguments.cpp
+	$(COMP) $(CPP_COMP_FLAG) -c $*.cpp
 
 clean:
 	rm -f $(OBJS) $(EXEC)
