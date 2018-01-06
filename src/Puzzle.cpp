@@ -87,7 +87,7 @@ bool Puzzle::solve()
     
     else
     {
-        for (unsigned int i = 0; i < _num_of_threads; i++)
+        for (unsigned int i = 0; i < _num_of_threads && i < _possible_dimentions.size(); i++)
         {
             _worker_threads.push_back(std::thread(&Puzzle::_thread_solve, this, i));
         }
