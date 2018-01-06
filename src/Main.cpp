@@ -2,19 +2,13 @@
 #include <fstream>
 #include <sstream>
 #include <list>
+
+#include "PuzzleArguments.h"
 #include "Logger.h"
 #include "Piece.h"
 #include "Puzzle.h"
 #include "Exceptions.h"
 
-enum arguments
-{
-	no_arguments = 0,
-	arg_input_file,
-	arg_output_file,
-	arg_rotate,
-	max_arguments,
-};
 
 #define USAGE "Usage: <program> <input_file> <output_file> [-rotate]\n"
 
@@ -22,55 +16,11 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		const std::string rotate_str("-rotate");
+		PuzzleArguments args(argc, argv);
+		Logger::set_logger(args.get_output_file_path());
 
-		std::string input_file_path, output_file_path;
-		bool rotate = false;
-
-		if (argc > max_arguments || argc < arg_rotate)
-		{
-			printf("lala " USAGE);
-			return -1;
-		}
-
-		if (argc == arg_rotate)
-		{
-			input_file_path = std::string(argv[arg_input_file]);
-			output_file_path = std::string(argv[arg_output_file]);
-		}
-		else
-		{
-			if (rotate_str.compare(argv[arg_input_file]) != 0)
-			{
-				input_file_path = std::string(argv[arg_input_file]);
-				if (rotate_str.compare(argv[arg_output_file]) != 0)
-				{
-					output_file_path = std::string(argv[arg_output_file]);
-					if (rotate_str.compare(argv[arg_rotate]) != 0)
-					{
-						printf(USAGE);
-						return -1;
-					}
-				}
-				else
-				{
-					output_file_path = std::string(argv[arg_output_file + 1]);
-				}
-				
-			}
-			else
-			{
-				input_file_path = std::string(argv[arg_input_file + 1]);
-				output_file_path = std::string(argv[arg_output_file + 1]);
-			}
-			rotate = true;
-
-		}
-
-		Logger::set_logger(output_file_path);
-
-		Puzzle puzzle(rotate, 4);
-		puzzle.initialize_from_file(input_file_path);
+		Puzzle puzzle(args.get_rotate(), args.get_thread_number());
+		puzzle.initialize_from_file(args.get_input_file_path());
 
 		if(puzzle.had_initialization_errors())
 		{
@@ -81,6 +31,10 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 		return 0;
+	}
+	catch (ArgumentsException& e)
+	{
+		printf("Wrong Usage!: %s\n" USAGE, e.get_cause().c_str());
 	}
 	catch (PuzzleException& e)
 	{
@@ -112,3 +66,4 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 }
+

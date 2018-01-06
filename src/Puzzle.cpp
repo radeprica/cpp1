@@ -31,8 +31,6 @@ void Puzzle::initialize_from_file(const std::string& input_path)
     std::getline(input_file, line);
     _num_of_pieces = _parse_num_piece_line(line);
 
-    _num_of_threads = 6; //todo change this to console arg
-
     _solution_by_worker.resize(_num_of_threads-1);
     _piece_organizer_of_worker.resize(_num_of_threads-1);
     _puzzle_pieces_of_worker.resize(_num_of_threads-1);
