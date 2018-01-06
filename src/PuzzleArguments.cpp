@@ -31,7 +31,7 @@ PuzzleArguments::PuzzleArguments(int argc, char **argv)
 		throw ArgumentsException("Wrong number of arguments");
 	}
 
-	_threads = 1;
+	_threads = 4;
 	_rotate = false;
 
 	if (arguments.size() >= args_with_threads)
