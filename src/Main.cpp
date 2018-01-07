@@ -34,17 +34,17 @@ int main(int argc, char* argv[])
 	}
 	catch (ArgumentsException& e)
 	{
-		printf("Wrong Usage: %s\n" USAGE, e.get_cause().c_str());
+		std::cout << "Wrong Usage: " << e.get_cause() << std::endl << USAGE;
 	}
 	catch (PuzzleException& e)
 	{
 		if(Logger::is_set())
 		{
-			LOG << "puzzle exception caught: " << e.get_cause() << '\n';
+			LOG << "puzzle exception caught: " << e.get_cause() << std::endl;
 		}
 		else
 		{
-			std::cout << "puzzle exception caught: " << e.get_cause() << '\n';
+			std::cout << "puzzle exception caught: " << e.get_cause() << std::endl;
 		}
 		return -1;
 	}
@@ -52,17 +52,17 @@ int main(int argc, char* argv[])
 	{
 		if(Logger::is_set())
 		{
-			LOG << "std exception caught: " << e.what() << '\n';
+			LOG << "std exception caught: " << e.what() << std::endl;
 		}
 		else
 		{
-			LOG << "std exception caught: " << e.what() << '\n';
+			LOG << "std exception caught: " << e.what() << std::endl;
 		}
 		return -1;
 	}
 	catch(...)
 	{
-		printf("Something went terribly wrong!\n");
+		std::cout <<"Something went terribly wrong!" << std::endl;
 		return -1;
 	}
 }

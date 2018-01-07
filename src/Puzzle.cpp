@@ -175,7 +175,7 @@ void Puzzle::_parse_piece_line(const std::string& line)
         bottom < -1 || bottom > 1)
     {
         std::pair<unsigned int, std::string> bad_line_pair(id, line);
-    _wrong_format_pieces.push_back(bad_line_pair); 
+        _wrong_format_pieces.push_back(bad_line_pair); 
     }
 
     else
