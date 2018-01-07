@@ -41,13 +41,13 @@ PuzzleArguments::PuzzleArguments(int argc, char **argv)
 			if (thread_flag_str.compare(*a) == 0)
 			{
 				a = arguments.erase(a);
-				int temp_threads = atoi((*a).c_str());
-				if (temp_threads > 0)
+				_threads = (unsigned int)atoi((*a).c_str());
+				if (_threads < 1)
 				{
-					_threads = static_cast<unsigned int>(temp_threads);	
-					arguments.erase(a);
-					thread_arguments_as_expected = true;
+					throw ArgumentsException("Must have at least one thread");
 				}
+				arguments.erase(a);
+				thread_arguments_as_expected = true;
 				break;
 			}
 		}
@@ -71,7 +71,7 @@ PuzzleArguments::PuzzleArguments(int argc, char **argv)
 		}
 		if (!rotate_argument_as_expected)
 		{
-			throw ArgumentsException("Expected -rotate | -threads n");
+			throw ArgumentsException("Expected -rotate");
 		}
 	}
 
