@@ -178,17 +178,21 @@ void Puzzle::_parse_piece_line(const std::string& line)
     _wrong_format_pieces.push_back(bad_line_pair); 
     }
 
-    // store piece information
-    _puzzle_pieces[id-1] = PiecePtr(new Piece(id,
-                                        (PieceSideShape)left, 
-                                        (PieceSideShape)top, 
-                                        (PieceSideShape)right, 
-                                        (PieceSideShape)bottom));
-    for (unsigned int worker_id=0; worker_id < _num_of_threads; worker_id++)
+    else
     {
-        PiecePtr worker_current_piece(new Piece(*(_puzzle_pieces[id-1])));
-        (_piece_organizer_of_worker[worker_id])->insert_piece(worker_current_piece);
+        // store piece information
+        _puzzle_pieces[id-1] = PiecePtr(new Piece(id,
+                                            (PieceSideShape)left, 
+                                            (PieceSideShape)top, 
+                                            (PieceSideShape)right, 
+                                            (PieceSideShape)bottom));
+        for (unsigned int worker_id=0; worker_id < _num_of_threads; worker_id++)
+        {
+            PiecePtr worker_current_piece(new Piece(*(_puzzle_pieces[id-1])));
+            (_piece_organizer_of_worker[worker_id])->insert_piece(worker_current_piece);
+        }
     }
+    
 }
 
 void Puzzle::_initialize_private_members()
@@ -437,7 +441,7 @@ bool Puzzle::_try_solve(unsigned int worker_id, unsigned int k,unsigned int row_
         
         _solution_by_worker[worker_id][k] = candidate;
 
-        LOG << std::endl;
+        
         return true;
     }
 

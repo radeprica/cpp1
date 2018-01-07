@@ -10,7 +10,7 @@
 #include "Exceptions.h"
 
 
-#define USAGE "Usage: <program> <input_file> <output_file> [-rotate]\n"
+#define USAGE "Usage: <program> <input_file> <output_file> [-rotate] [-threads n]\n"
 
 int main(int argc, char* argv[])
 {
