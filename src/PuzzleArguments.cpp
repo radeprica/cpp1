@@ -41,7 +41,7 @@ PuzzleArguments::PuzzleArguments(int argc, char **argv)
 			if (thread_flag_str.compare(*a) == 0)
 			{
 				a = arguments.erase(a);
-				_threads = (unsigned int)atoi((*a).c_str());
+				_threads = atoi((*a).c_str());
 				if (_threads < 1)
 				{
 					throw ArgumentsException("Must have at least one thread");
