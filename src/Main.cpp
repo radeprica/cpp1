@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	}
 	catch (ArgumentsException& e)
 	{
-		printf("Wrong Usage!: %s\n" USAGE, e.get_cause().c_str());
+		printf("Wrong Usage: %s\n" USAGE, e.get_cause().c_str());
 	}
 	catch (PuzzleException& e)
 	{
