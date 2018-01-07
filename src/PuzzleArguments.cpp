@@ -41,15 +41,19 @@ PuzzleArguments::PuzzleArguments(int argc, char **argv)
 			if (thread_flag_str.compare(*a) == 0)
 			{
 				a = arguments.erase(a);
-				_threads = (unsigned int)atoi((*a).c_str());
-				arguments.erase(a);
-				thread_arguments_as_expected = true;
+				int temp_threads = atoi((*a).c_str());
+				if (temp_threads > 0)
+				{
+					_threads = static_cast<unsigned int>(temp_threads);	
+					arguments.erase(a);
+					thread_arguments_as_expected = true;
+				}
 				break;
 			}
 		}
 		if (!thread_arguments_as_expected)
 		{
-			throw ArgumentsException("Expected -thread argument");
+			throw ArgumentsException("Expected -threads n");
 		}
 	}
 
@@ -67,7 +71,7 @@ PuzzleArguments::PuzzleArguments(int argc, char **argv)
 		}
 		if (!rotate_argument_as_expected)
 		{
-			throw ArgumentsException("Expected -rotate argument");
+			throw ArgumentsException("Expected -rotate | -threads n");
 		}
 	}
 
