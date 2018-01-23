@@ -12,8 +12,7 @@ template<int K>
 class GroupPuzzlePieces
 {
 public:
-    // TODO: get iterators
-    GroupPuzzlePieces(typename std::list<Puzzle2dPiece<K>> puzzle_pieces)
+    GroupPuzzlePieces(typename std::list<Puzzle2dPiece<K>>::iterator begin, typename std::list<Puzzle2dPiece<K>>::iterator end)
     {
         static constexpr unsigned int max_list_index = 2 * K + 1;
 
@@ -34,9 +33,9 @@ public:
             }
         }
 
-        for (Puzzle2dPiece<K> piece : puzzle_pieces)
+        for (auto it = begin; it != end; it++)
         {
-            _insert_piece(std::make_shared<Puzzle2dPiece<K>>(piece));
+            _insert_piece(std::make_shared<Puzzle2dPiece<K>>(*it));
         }
     }
 
@@ -147,10 +146,10 @@ private:
     std::array<std::array<std::array<std::array<typename Puzzle2dPiece<K>::Puzzle2dPieceListPtr, 2 * K + 1>, 2 * K + 1>, 2 * K + 1>, 2 * K + 1> _grouped_pieces;
 };
 
-#endif //GROUPED_PUZZLE_PIECES_H
-
-template<int K>
-GroupPuzzlePieces<K> groupPuzzlePieces(typename std::list<Puzzle2dPiece<K>> puzzle_pieces)
+template<class Iterator, int T = std::iterator_traits<Iterator>::value_type::k>
+GroupPuzzlePieces<T> groupPuzzlePieces(Iterator begin, Iterator end)
 {
-    return GroupPuzzlePieces<K>(puzzle_pieces);
+    return GroupPuzzlePieces<T>(begin, end);
 }
+
+#endif //GROUPED_PUZZLE_PIECES_H

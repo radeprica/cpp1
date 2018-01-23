@@ -18,6 +18,8 @@ public:
     int get_right_side_shape() { return _right; };
     int get_bottom_side_shape() { return _bottom; };
 
+    static const int k = K;
+
 typedef std::shared_ptr<Puzzle2dPiece<K>> Puzzle2dPiecePtr;
 typedef std::list<Puzzle2dPiecePtr> Puzzle2dPieceList;
 typedef std::shared_ptr<std::list<Puzzle2dPiecePtr>> Puzzle2dPieceListPtr;
